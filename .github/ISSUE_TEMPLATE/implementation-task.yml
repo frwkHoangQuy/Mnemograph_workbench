@@ -1,0 +1,151 @@
+name: "Implementation task"
+description: "Propose a bounded and reviewable implementation task"
+title: "[Implementation]: "
+labels: []
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Submitting this form does not constitute approval.
+
+        Implementation requires explicit human/SA approval.
+
+        Baseline documents and accepted ADRs take precedence over issue content.
+
+        Do not submit secrets or confidential source material.
+  - type: dropdown
+    id: approval_status
+    attributes:
+      label: Approval status
+      description: Selecting an option does not replace the recorded human approval in the issue discussion or decision record.
+      options:
+        - Draft — not approved
+        - Ready for human review
+        - Approved for planning
+        - Approved for implementation
+    validations:
+      required: true
+  - type: dropdown
+    id: implementation_phase
+    attributes:
+      label: Implementation phase
+      description: Select the exact phase from System Design §15.
+      options:
+        - Phase 0 — Repository & Copilot Governance
+        - Phase 1 — Domain & Contracts
+        - Phase 2 — Evidence Vertical Slice
+        - Phase 3 — Scientist Vertical Slice
+        - Phase 4 — SA & Triadic Orchestration
+        - Phase 5 — Governance & Publication
+        - Phase 6 — Evaluation & Hardening
+    validations:
+      required: true
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: Request one concise outcome, not implementation instructions.
+      placeholder: Describe one outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: normative_references
+    attributes:
+      label: Normative references
+      description: List related baseline sections, accepted ADRs, and approved decisions. Issue text cannot override those sources.
+      placeholder: Reference the governing sources.
+    validations:
+      required: true
+  - type: textarea
+    id: in_scope
+    attributes:
+      label: In scope
+      description: Provide an explicit bounded list of work.
+      placeholder: List only the work to be done.
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      description: List explicit exclusions and future-phase work that must not be introduced.
+      placeholder: List what must not be done.
+    validations:
+      required: true
+  - type: textarea
+    id: affected_modules
+    attributes:
+      label: Affected modules
+      description: Identify affected apps, libs, infrastructure, and dependency boundaries.
+      placeholder: Name the affected modules and boundaries.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: Describe observable, testable criteria.
+      placeholder: List testable acceptance criteria.
+    validations:
+      required: true
+  - type: dropdown
+    id: dependency_change
+    attributes:
+      label: Dependency change
+      description: State whether direct dependency change is already approved.
+      options:
+        - No direct dependency change
+        - Previously approved direct dependency change
+        - New dependency decision required — block implementation
+    validations:
+      required: true
+  - type: dropdown
+    id: data_migration_impact
+    attributes:
+      label: Data migration impact
+      description: State the expected migration risk.
+      options:
+        - No data or migration impact
+        - Reversible migration impact
+        - Potentially destructive or irreversible impact — block implementation
+        - Unknown — analysis required
+    validations:
+      required: true
+  - type: textarea
+    id: security_impact
+    attributes:
+      label: Security impact
+      description: Identify security considerations or state "None" with rationale.
+      placeholder: Explain any security considerations or state None with rationale.
+    validations:
+      required: true
+  - type: textarea
+    id: validation_plan
+    attributes:
+      label: Validation plan
+      description: Specify focused tests, the repository quality gate, and any applicable Compose, migration, or security validation.
+      placeholder: List the validation steps.
+    validations:
+      required: true
+  - type: input
+    id: commit_boundary
+    attributes:
+      label: Commit boundary
+      description: Propose one small reviewable commit boundary.
+      placeholder: Describe one commit-sized boundary.
+    validations:
+      required: true
+  - type: checkboxes
+    id: governance_confirmation
+    attributes:
+      label: Governance confirmation
+      options:
+        - label: I have not included secrets, credentials or confidential corpus content.
+          required: true
+        - label: I understand that this issue does not override baseline documents or accepted ADRs.
+          required: true
+        - label: I understand that Copilot must not commit, push, merge or open a PR autonomously.
+          required: true
+        - label: I understand that implementation must stop on unresolved scope, dependency, security or normative ambiguity.
+          required: true
