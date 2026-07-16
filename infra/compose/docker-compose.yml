@@ -1,0 +1,53 @@
+# Local development only.
+# All services are replaceable adapters.
+# This file does not close System Design section 17 open decisions.
+# Credentials are intentionally non-production defaults.
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.0-pg16
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mnemograph}
+      POSTGRES_USER: ${POSTGRES_USER:-mnemograph}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_local_only}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init/001-init-extensions.sql:/docker-entrypoint-initdb.d/001-init-extensions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"${POSTGRES_USER:-mnemograph}\" -d \"${POSTGRES_DB:-mnemograph}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  valkey:
+    image: valkey/valkey:8.0.1
+    ports:
+      - "127.0.0.1:${VALKEY_PORT:-6379}:6379"
+    volumes:
+      - valkey_data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  minio:
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z
+    command: server /data --console-address ":9001"
+    ports:
+      - "127.0.0.1:${MINIO_API_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-mnemograph}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-changeme_local_only}
+    volumes:
+      - minio_data:/data
+
+volumes:
+  postgres_data:
+  valkey_data:
+  minio_data:
