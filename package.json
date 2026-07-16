@@ -1,0 +1,21 @@
+{
+  "name": "mnemograph-workbench",
+  "private": true,
+  "packageManager": "pnpm@11.13.1",
+  "engines": {
+    "node": "24.18.0",
+    "pnpm": "11.13.1"
+  },
+  "scripts": {
+    "format": "turbo run format && uv run ruff format .",
+    "format:check": "turbo run format:check && uv run ruff format --check .",
+    "lint": "turbo run lint && uv run ruff check .",
+    "typecheck": "turbo run typecheck && uv run mypy .",
+    "test": "turbo run test && uv run pytest",
+    "build": "turbo run build && uv build --all-packages",
+    "validate": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
+  },
+  "devDependencies": {
+    "turbo": "2.10.5"
+  }
+}

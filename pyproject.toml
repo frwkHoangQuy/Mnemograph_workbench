@@ -1,0 +1,40 @@
+[project]
+name = "mnemograph-workbench"
+version = "0.0.0"
+requires-python = ">=3.13,<3.14"
+
+# This root project is a virtual workspace coordinator only: it is not built or
+# published as a Python package. Every buildable workspace member (created in
+# Phase 0.2) declares its own [build-system] using hatchling==1.31.0 explicitly.
+[tool.uv]
+package = false
+dev-dependencies = [
+    "ruff==0.15.21",
+    "mypy==2.3.0",
+    "pytest==9.1.1",
+]
+
+[tool.uv.workspace]
+members = [
+    "apps/api",
+    "apps/worker",
+    "libs/contracts",
+    "libs/domain",
+    "libs/prompts",
+    "libs/model_gateway",
+    "libs/evaluation",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["apps", "libs"]
