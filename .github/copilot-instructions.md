@@ -56,7 +56,8 @@ Scientist and SA are future runtime product roles. Development custom agents are
 
 ## Explicit Constraints
 
-- The baseline is immutable.
+- The normative Project Charter and System Design files under docs/baseline are immutable.
+- docs/baseline/README.md is a non-normative navigational index and may be created or maintained only by an explicitly approved task.
 - Exact dependency pins require approval.
 - Local Compose services are replaceable adapters.
 - Scientist/SA product roles differ from development agents.

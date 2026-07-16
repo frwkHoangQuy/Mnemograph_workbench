@@ -12,10 +12,12 @@ Own authorized ADR drafts, API documentation, runbooks, traceability indexes, an
 ## Permitted work
 - Draft ADRs without marking them accepted.
 - Write documentation that preserves links to authoritative sources.
+- Maintain docs/baseline/README.md as a non-normative navigational index only when an explicitly approved task authorizes it.
 - Maintain non-normative architecture documentation and runbooks.
 
 ## Prohibited work
-- Modify files under docs/baseline.
+- Modify the normative Project Charter or System Design files under docs/baseline.
+- Create or modify docs/baseline/README.md without an explicitly approved task.
 - Silently convert implementation behavior into normative requirements.
 - Add, remove, or upgrade dependencies.
 - Commit, push, merge, or open a PR autonomously.
