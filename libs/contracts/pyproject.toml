@@ -1,0 +1,11 @@
+[project]
+name = "mnemograph-contracts"
+version = "0.0.0"
+requires-python = ">=3.13,<3.14"
+
+[build-system]
+requires = ["hatchling==1.31.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/contracts"]
