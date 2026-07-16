@@ -1,6 +1,6 @@
 # MNEMOGRAPH TRIADIC RESEARCH WORKBENCH
 
-## Project Charter & Working Agreement — Version 1.1
+## Project Charter & Working Agreement — Version 1.2
 
 **Trạng thái:** Định hướng chính thức cho luồng làm việc hiện tại  
 **Ngày hiệu lực:** 2026-07-16  
@@ -87,6 +87,7 @@ Năng lực cần thiết của NotebookLM sẽ được tái tạo bằng một
 - Quản lý bất đồng thay vì tự động hòa giải hai AI.
 - Lưu vết đầy đủ từ giả thuyết tới quyết định và phiên bản phương án chính thức.
 - Giảm tối đa thao tác copy/paste thủ công giữa các công cụ.
+- Khi người dùng yêu cầu sau khi hoàn thành mục tiêu, xuất hai tài liệu kết luận độc lập: Scientific Rationale và Architecture Advisory.
 
 ### 3.2. Mục tiêu dài hạn
 
@@ -113,6 +114,10 @@ Năng lực cần thiết của NotebookLM sẽ được tái tạo bằng một
 12. **Người dùng là chủ thể quyết định tiếp tục, chấp nhận, mở lại, tạm dừng hoặc kết thúc.**
 13. **Việc phân rã mục tiêu chỉ có hiệu lực sau khi người dùng phê duyệt.**
 14. **Kết luận của một mục tiêu nhỏ không tự động trở thành kết luận chung của mục tiêu ban đầu.**
+15. **Scientific Rationale chỉ được dùng nguồn khoa học làm bằng chứng.**
+16. **Architecture Advisory phải coi phương án cuối đã được người dùng chấp nhận là theoretical baseline.**
+17. **Hai tài liệu cuối không được thay thế hoặc giả mạo căn cứ của nhau.**
+18. **Không được tuyên bố mức độ đúng đắn cao hơn mức mà evidence thực tế hỗ trợ.**
 
 ---
 
@@ -339,6 +344,103 @@ stateDiagram-v2
     UserCheckpoint --> Stopped: User stops
 ```
 
+### 8.6. Dual-Deliverable Publication Gate
+
+Khi mục tiêu ban đầu đã đạt điều kiện hoàn thành do người dùng xác lập, hệ thống tạo một `FinalCandidateResult`. Chỉ sau khi người dùng chấp nhận kết quả này, hệ thống mới đóng băng nó thành `FinalAcceptedProposal`.
+
+Việc hoàn thành thảo luận không tự động sinh tài liệu. Người dùng phải chủ động gọi `@publish` hoặc yêu cầu xuất tài liệu. Khi đó, hệ thống tạo hai deliverables tách biệt.
+
+#### Deliverable A — Scientific Rationale Document
+
+**Chủ thể chịu trách nhiệm:** Scientific Agent  
+**Mục tiêu:** Xây dựng tài liệu lý luận khoa học cho phương án cuối cùng đã được chấp nhận.
+
+Nguồn đầu vào được phép:
+
+- Scientific Corpus đã đóng băng theo `evidence_snapshot_id`.
+- Verified claims và counter-evidence.
+- Các công thức, giả định và giới hạn đã được người dùng chấp nhận trong `FinalAcceptedProposal`.
+
+Nguồn không được dùng làm bằng chứng khoa học:
+
+- Ý kiến của SA.
+- Lựa chọn công nghệ.
+- Transcript hội thoại.
+- Quyết định của người dùng.
+- Project notes hoặc output của AI.
+
+Tài liệu phải bao gồm tối thiểu:
+
+1. Mục tiêu và phạm vi nghiên cứu.
+2. Phương án cuối cùng cần lập luận.
+3. Ontology và định nghĩa thuật ngữ.
+4. Phương pháp lựa chọn và đánh giá nguồn.
+5. Các scientific claims kèm citation locator.
+6. Chuỗi lập luận từ bằng chứng tới phương án.
+7. Công thức hoặc mô hình lý thuyết liên quan.
+8. Counter-evidence và cách xử lý.
+9. Điều kiện áp dụng.
+10. Mức độ tin cậy, limitation và open questions.
+11. Các phương án đã bị bác bỏ hoặc sửa đổi.
+12. Kết luận khoa học.
+
+Scientific Agent không được tuyên bố phương án đã được “chứng minh tuyệt đối” nếu nguồn chỉ cung cấp bằng chứng gián tiếp, tương quan, giới hạn theo population hoặc chưa có thực nghiệm trực tiếp. Khi đó phải sử dụng các mức kết luận như `SUPPORTED`, `CONDITIONALLY_SUPPORTED`, `PARTIALLY_SUPPORTED` hoặc `INSUFFICIENT_EVIDENCE`.
+
+#### Deliverable B — Architecture Advisory Document
+
+**Chủ thể chịu trách nhiệm:** SA Agent  
+**Mục tiêu:** Chuyển phương án cuối cùng đã được chấp nhận thành tư vấn thiết kế kiến trúc có khả năng triển khai.
+
+Nguồn đầu vào chính:
+
+- `FinalAcceptedProposal` như theoretical baseline bắt buộc.
+- Scientific Rationale Document để truy nguyên cơ sở khoa học, không dùng thay cho requirement.
+- Project constraints và non-functional requirements do người dùng xác nhận.
+- Model Dependency Register, Architecture Decision Records và các risk records.
+
+SA không được tự ý sửa hoặc bác bỏ theoretical baseline trong tài liệu tư vấn. Nếu phát hiện baseline không thể triển khai, SA phải ghi thành `Architecture Blocker` hoặc `Research Reopen Request` để người dùng quyết định mở lại quá trình nghiên cứu.
+
+Tài liệu phải bao gồm tối thiểu:
+
+1. Executive summary.
+2. Theoretical baseline và version tham chiếu.
+3. Scope và non-goals.
+4. Architecture drivers.
+5. Assumptions, invariants và constraints.
+6. Logical architecture và component boundaries.
+7. Data architecture và state ownership.
+8. Agent/model architecture và API contracts.
+9. Thành phần calculation, calibration, pretrained, fine-tune và custom-train.
+10. Workflow, causal ordering và consistency model.
+11. Security, privacy, provenance, audit và versioning.
+12. Scalability, latency, availability và cost considerations.
+13. Trade-offs và Architecture Decision Records.
+14. Risks, blockers và open issues.
+15. Implementation roadmap và validation strategy.
+16. Traceability từ accepted claims tới architecture components.
+
+#### Tính độc lập và liên kết phiên bản
+
+Hai tài liệu phải được version hóa và liên kết bằng:
+
+- `goal_id`.
+- `approved_goal_plan_version`.
+- `final_accepted_proposal_version`.
+- `evidence_snapshot_id`.
+- `scientific_rationale_version`.
+- `architecture_advisory_version`.
+- `generated_by_model_version` và `prompt_version`.
+
+Scientific Rationale là căn cứ khoa học. Architecture Advisory là tư vấn triển khai. Hai tài liệu tạo thành một bộ kết luận nhưng không được gộp thành một tiếng nói duy nhất.
+
+#### Review và phát hành
+
+1. Hai agent tạo bản nháp độc lập.
+2. Hệ thống chạy citation/provenance validation cho Scientific Rationale.
+3. Hệ thống chạy theoretical-traceability validation cho Architecture Advisory.
+4. Người dùng xem và yêu cầu sửa từng tài liệu độc lập.
+5. Chỉ người dùng mới được phê duyệt bản phát hành cuối.
+
 ---
 
 ## 9. Loại phát biểu chuẩn
@@ -406,6 +508,8 @@ Source ingestion
 → User checkpoints and interventions
 → Cross-subgoal consistency review
 → User-controlled final decision
+→ User requests dual publication
+→ Scientific Rationale + Architecture Advisory
 → Traceability record
 ```
 
@@ -427,6 +531,10 @@ MVP chưa cần:
 - Hai role đề xuất được goal decomposition và chỉ thực thi sau khi người dùng phê duyệt.
 - Mỗi subgoal có trạng thái, Definition of Done và kết luận riêng.
 - Không role nào có thể tự kết thúc mục tiêu tổng thể.
+- Chỉ sinh hai tài liệu kết luận khi người dùng yêu cầu sau khi chấp nhận `FinalAcceptedProposal`.
+- Scientific Rationale không chứa SA opinion như bằng chứng khoa học.
+- Architecture Advisory truy nguyên được mọi quyết định quan trọng về theoretical baseline.
+- Hai tài liệu có version linkage và được người dùng phê duyệt độc lập.
 - Hai roles được hiển thị và lưu vết độc lập.
 - Scientific claim có citation locator hoặc nhãn `INSUFFICIENT_EVIDENCE`.
 - SA review liên kết được với claim gốc.
@@ -471,6 +579,10 @@ MVP chưa cần:
 - Human gate.
 - Traceability Matrix.
 - Normative versioning.
+- FinalAcceptedProposal freeze.
+- Scientific Rationale generator và citation validation.
+- Architecture Advisory generator và theoretical-traceability validation.
+- Dual-document review và publication workflow.
 
 ### Phase 4 — Evaluation & Hardening
 
@@ -528,16 +640,21 @@ Mọi yêu cầu quay lại thiết kế `Mnemograph_Core` phải được xem l
 | `DEC-008` | Hai role phải đề xuất phân rã mục tiêu trước khi xử lý mục tiêu lớn | Accepted |
 | `DEC-009` | Chỉ người dùng quyết định điều kiện kết thúc phiên và mục tiêu tổng thể | Accepted |
 | `DEC-010` | Vòng lặp được giới hạn bằng subgoal, checkpoint và cảnh báo tài nguyên; không tự động kết luận | Accepted |
+| `DEC-011` | Sau khi chấp nhận kết quả, người dùng có thể yêu cầu hai tài liệu kết luận độc lập | Accepted |
+| `DEC-012` | Scientific Rationale chỉ sử dụng Scientific Corpus làm nguồn bằng chứng | Accepted |
+| `DEC-013` | Architecture Advisory sử dụng FinalAcceptedProposal làm theoretical baseline | Accepted |
+| `DEC-014` | Hai tài liệu được version hóa, kiểm tra và phê duyệt độc lập | Accepted |
 
 ---
 
 ## 17. Bước tiếp theo
 
-Thiết kế và chốt bốn nhóm hợp đồng đầu tiên:
+Thiết kế và chốt năm nhóm hợp đồng đầu tiên:
 
 1. `Goal`, `GoalDecompositionProposal`, `ApprovedGoalPlan` và `Subgoal`.
 2. `DeliberationTurn`, `UserIntervention` và `UserCheckpoint`.
 3. `SourceManifest` và `EvidencePassage`.
 4. `ScientificResearchResponse`, `Claim`, `SAReviewResponse` và `ArchitectureIssue`.
+5. `FinalAcceptedProposal`, `ScientificRationaleDocument` và `ArchitectureAdvisoryDocument`.
 
 Sau đó mới lựa chọn stack công nghệ và model API ứng viên cho MVP.
