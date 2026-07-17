@@ -6,7 +6,7 @@ Date: 2026-07-17
 
 Deciders: project owner, Lead SA
 
-Related issue: Delivery D1 planning record
+Related issue: None — approved during supervised architecture review
 
 Related baseline sections:
 
@@ -17,7 +17,7 @@ Delivery scope: Delivery D1 — Domain & Contracts
 
 ## Context and problem
 
-Delivery D1 must establish the pure domain and published contract boundaries for the workbench without introducing implementation code. The accepted baselines describe durable state ownership, state-machine discipline, structured outputs, and dependency boundaries, but the repository skeleton still contains generic placeholder import packages for `domain` and `contracts`.
+Delivery D1 must establish the pure domain and published contract boundaries for the workbench through separately approved implementation batches. This ADR records those boundaries without introducing implementation code. The accepted baselines describe durable state ownership, state-machine discipline, structured outputs, and dependency boundaries, but the repository skeleton still contains generic placeholder import packages for `domain` and `contracts`.
 
 This ADR records the approved boundary decisions for D1.
 
@@ -25,7 +25,7 @@ This ADR does not modify, override, or reorder either accepted baseline.
 
 ## Constraints
 
-- Delivery D1 is a planning boundary, not an implementation authorization.
+- This ADR records Delivery D1 architecture decisions but does not itself authorize implementation; each implementation batch requires a separately approved issue and plan.
 - Domain logic must remain dependency-free from frameworks, databases, queues, storage clients, and model-provider SDKs.
 - Published contracts may validate transport shapes, but they must not absorb inward application/domain ports.
 - The repository has no production consumer yet, so D1 may rename import modules without compatibility aliases.
@@ -40,7 +40,7 @@ This ADR does not modify, override, or reorder either accepted baseline.
 
 ## Facts and evidence
 
-- Project Charter §8 requires durable, replayable deliberation and human-controlled normative change.
+- Project Charter §8 defines the user-supervised goal, subgoal, checkpoint, intervention, and completion protocol.
 - Project Charter §13 frames the capability roadmap that D1 supports.
 - System Design §§4 and 5 define bounded modules and state-machine discipline.
 - System Design §7.3 requires structured outputs to be parsed and validated before they become draft domain state.
