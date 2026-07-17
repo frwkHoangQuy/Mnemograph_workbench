@@ -1,0 +1,168 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: web
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.0.0
+        with:
+          version: 11.13.1
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Verify Node and pnpm versions
+        run: |
+          set -euo pipefail
+          node_ver="$(node --version)"
+          pnpm_ver="$(pnpm --version)"
+          if [ "$node_ver" != "v24.18.0" ]; then
+            echo "Expected node v24.18.0, got $node_ver"
+            exit 1
+          fi
+          if [ "$pnpm_ver" != "11.13.1" ]; then
+            echo "Expected pnpm 11.13.1, got $pnpm_ver"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm exec turbo run format:check
+
+      - name: Lint
+        run: pnpm exec turbo run lint
+
+      - name: Typecheck
+        run: pnpm exec turbo run typecheck
+
+      - name: Test
+        run: pnpm exec turbo run test
+
+      - name: Build
+        run: pnpm exec turbo run build
+
+  python:
+    name: python
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4.1.0
+        with:
+          version: 0.11.28
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install Python
+        run: uv python install 3.13.14
+
+      - name: Verify uv and Python versions
+        run: |
+          set -euo pipefail
+          uv_ver="$(uv --version | awk '{print $2}')"
+          py_path="$(uv python find 3.13.14)"
+          py_ver="$($py_path --version | awk '{print $2}')"
+          if [ "$uv_ver" != "0.11.28" ]; then
+            echo "Expected uv 0.11.28, got $uv_ver"
+            exit 1
+          fi
+          if [ "$py_ver" != "3.13.14" ]; then
+            echo "Expected Python 3.13.14, got $py_ver"
+            exit 1
+          fi
+
+      - name: Sync dependencies
+        run: uv sync --all-packages --locked
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Mypy
+        run: uv run mypy .
+
+      - name: Pytest
+        run: uv run pytest
+
+      - name: Build packages
+        run: uv build --all-packages
+
+  compose-validate:
+    name: compose-validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Enforce no-secrets-context policy
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import sys
+
+          root = Path('.github/workflows')
+          fragments = ['$', '{{', ' secrets.']
+          variants = [
+              fragments[0] + fragments[1] + fragments[2],
+              fragments[0] + fragments[1] + fragments[2].lstrip(),
+          ]
+
+          offenders = []
+          for pattern in ('*.yml', '*.yaml'):
+            for path in sorted(root.glob(pattern)):
+              text = path.read_text(encoding='utf-8')
+              if any(needle in text for needle in variants):
+                offenders.append(path.as_posix())
+
+          if offenders:
+            print('Forbidden secrets context detected in workflow files:')
+            for path in offenders:
+              print(path)
+            sys.exit(1)
+
+          print('No forbidden secrets context detected in workflow files.')
+          PY
+
+      - name: Validate Compose configuration
+        run: docker compose -f infra/compose/docker-compose.yml config

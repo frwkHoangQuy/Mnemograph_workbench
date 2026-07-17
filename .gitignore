@@ -1,38 +1,4 @@
-# Dependencies
-node_modules/
-.pnpm-store/
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-*.egg-info/
-
-# Build outputs
-.next/
-dist/
-build/
-.turbo/
-
-# Environment (never commit real secrets — see .env.example files)
-.env
-.env.*.local
-
-# Logs
-*.log
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Editor (keep shared extension recommendations)
-.vscode/*
-!.vscode/extensions.json
-
-# Environment and local secrets
+# Environment and local secrets (never commit real secrets)
 .env
 .env.*
 !.env.example
@@ -90,7 +56,7 @@ infra/compose/volumes/
 infra/compose/.data/
 .minio/
 
-# IDE
+# IDE (keep shared extension recommendations)
 .idea/
 .vscode/*
 !.vscode/extensions.json

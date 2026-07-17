@@ -8,10 +8,13 @@ requires-python = ">=3.13,<3.14"
 # Phase 0.2) declares its own [build-system] using hatchling==1.31.0 explicitly.
 [tool.uv]
 package = false
-dev-dependencies = [
+
+[dependency-groups]
+dev = [
     "ruff==0.15.21",
     "mypy==2.3.0",
     "pytest==9.1.1",
+    "httpx2==2.7.0",
 ]
 
 [tool.uv.workspace]
@@ -38,3 +41,4 @@ strict = true
 
 [tool.pytest.ini_options]
 testpaths = ["apps", "libs"]
+addopts = ["--import-mode=importlib"]
