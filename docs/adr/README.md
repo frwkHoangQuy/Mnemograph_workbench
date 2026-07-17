@@ -12,6 +12,10 @@ Repository ADR index:
 - It does not transcribe, replace, or modify the seven baseline ADRs recorded in System Design §16.
 - [ADR-DOMAIN-001: Pure Domain and Published Contract Boundaries](ADR-DOMAIN-001-pure-domain-and-published-contract-boundaries.md) records the approved Delivery D1 package, dependency, primitive, and ownership boundary.
 
+## Proposed ADRs
+
+- [ADR-DOMAIN-002: Delivery D1.2 Schema Scope and Moderator Semantics](ADR-DOMAIN-002-d1-2-schema-scope-and-moderator-semantics.md) is Proposed, non-normative until explicitly accepted by an authorized human, and limited to drafting a Delivery D1.2 clarification. It does not modify ADR-DOMAIN-001 or authorize Delivery D1.2 implementation.
+
 Future ADR files start as Proposed and require explicit human approval before they can become Accepted. An ADR proposal issue is not the accepted ADR document.
 
 Status lifecycle: Proposed, Accepted, Rejected, Superseded.
