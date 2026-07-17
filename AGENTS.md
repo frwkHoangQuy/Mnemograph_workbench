@@ -52,7 +52,7 @@ Copilot must not modify normative documents or reinterpret lower-level artifacts
 - web consumes published API contracts only.
 - publication must not invoke providers outside Model Gateway.
 
-## Phase 0 Operational-Placeholder Exception
+## Delivery D0 Operational-Placeholder Exception
 
 The only current runtime behavior is:
 
@@ -60,7 +60,7 @@ The only current runtime behavior is:
 - API GET /health
 - worker deterministic readiness line
 
-No other business behavior may be introduced in Phase 0.
+No other business behavior may be introduced under the Delivery D0 operational-placeholder exception.
 
 ## Never Delegate To Copilot
 

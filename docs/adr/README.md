@@ -4,7 +4,7 @@ This directory holds architecture decision record guidance for this repository.
 
 An ADR captures a human-reviewed architecture decision, its context, trade-offs, consequences, validation and traceability. It is a normative record only after explicit human approval.
 
-The seven already accepted ADRs remain authoritative only in System Design §16. Phase 0 does not transcribe them into individual ADR files.
+The seven already accepted ADRs remain authoritative only in System Design §16. Delivery D0 did not transcribe them into individual ADR files.
 
 Repository ADR index:
 
