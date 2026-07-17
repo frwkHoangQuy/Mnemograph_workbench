@@ -2,15 +2,19 @@
 
 ## Project Summary
 
-Mnemograph Triadic Research Workbench is a phased repository foundation for the workbench. Phase 0 currently contains only repository skeletons, static placeholder runtime behavior, and replaceable local-development infrastructure.
+Mnemograph Triadic Research Workbench is a phased repository foundation for the workbench. Delivery D0 is complete and contains only repository skeletons, static placeholder runtime behavior, and replaceable local-development infrastructure.
 
 ## Current Boundary
 
-Phase 0 stays within the operational-placeholder exception:
+Delivery D0 stays within the operational-placeholder exception:
 
 - web static placeholder page
 - API GET /health
 - worker deterministic readiness line
+
+Delivery D1 is the next repository delivery target, but it requires an approved issue and an approved implementation plan before any implementation begins.
+
+The existing placeholders remain in place until an approved D1 batch changes them.
 
 Scientist and SA are future runtime product roles. Development custom agents are repository implementation assistants. Copilot must not impersonate a Scientist or SA participant.
 
@@ -51,6 +55,7 @@ Scientist and SA are future runtime product roles. Development custom agents are
 ## References
 
 - [AGENTS.md](../AGENTS.md)
+- [ADR-GOV-001: Phase Namespace Reconciliation](../docs/adr/ADR-GOV-001-phase-namespace-reconciliation.md)
 - [Project Charter](../docs/baseline/Mnemograph_Triadic_Research_Workbench_Project_Charter_v1.0.md)
 - [System Design](../docs/baseline/Mnemograph_Triadic_Research_Workbench_System_Design_v0.1.md)
 

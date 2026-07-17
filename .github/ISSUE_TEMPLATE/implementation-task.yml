@@ -30,15 +30,15 @@ body:
     id: implementation_phase
     attributes:
       label: Implementation phase
-      description: Select the exact phase from System Design §15.
+      description: Select the exact Repository Delivery D# phase from System Design §15.
       options:
-        - Phase 0 — Repository & Copilot Governance
-        - Phase 1 — Domain & Contracts
-        - Phase 2 — Evidence Vertical Slice
-        - Phase 3 — Scientist Vertical Slice
-        - Phase 4 — SA & Triadic Orchestration
-        - Phase 5 — Governance & Publication
-        - Phase 6 — Evaluation & Hardening
+        - Delivery D0 — Repository & Copilot Governance
+        - Delivery D1 — Domain & Contracts
+        - Delivery D2 — Evidence Vertical Slice
+        - Delivery D3 — Scientist Vertical Slice
+        - Delivery D4 — SA & Triadic Orchestration
+        - Delivery D5 — Governance & Publication
+        - Delivery D6 — Evaluation & Hardening
     validations:
       required: true
   - type: textarea

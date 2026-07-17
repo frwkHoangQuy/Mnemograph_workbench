@@ -16,6 +16,14 @@ Highest to lowest authority:
 
 Copilot must not modify normative documents or reinterpret lower-level artifacts as authority over them.
 
+## Phase Terminology
+
+- Use Charter C# for Project Charter §13 capability stages.
+- Use Delivery D# for System Design §15 repository delivery phases.
+- Repository work, issues, branches, implementation plans, commits and pull requests must use the Delivery D# namespace.
+- Avoid unqualified "Phase N" wording where ambiguity is possible.
+- See [ADR-GOV-001: Phase Namespace Reconciliation](docs/adr/ADR-GOV-001-phase-namespace-reconciliation.md).
+
 ## Human Supervision
 
 - Work in small reviewable batches.
