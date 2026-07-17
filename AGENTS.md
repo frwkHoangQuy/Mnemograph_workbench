@@ -16,6 +16,14 @@ Highest to lowest authority:
 
 Copilot must not modify normative documents or reinterpret lower-level artifacts as authority over them.
 
+## Phase Terminology
+
+- Use Charter C# for Project Charter §13 capability stages.
+- Use Delivery D# for System Design §15 repository delivery phases.
+- Repository work, issues, branches, implementation plans, commits and pull requests must use the Delivery D# namespace.
+- Avoid unqualified "Phase N" wording where ambiguity is possible.
+- See [ADR-GOV-001: Phase Namespace Reconciliation](docs/adr/ADR-GOV-001-phase-namespace-reconciliation.md).
+
 ## Human Supervision
 
 - Work in small reviewable batches.
@@ -44,7 +52,7 @@ Copilot must not modify normative documents or reinterpret lower-level artifacts
 - web consumes published API contracts only.
 - publication must not invoke providers outside Model Gateway.
 
-## Phase 0 Operational-Placeholder Exception
+## Delivery D0 Operational-Placeholder Exception
 
 The only current runtime behavior is:
 
@@ -52,7 +60,7 @@ The only current runtime behavior is:
 - API GET /health
 - worker deterministic readiness line
 
-No other business behavior may be introduced in Phase 0.
+No other business behavior may be introduced under the Delivery D0 operational-placeholder exception.
 
 ## Never Delegate To Copilot
 

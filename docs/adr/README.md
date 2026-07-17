@@ -4,7 +4,12 @@ This directory holds architecture decision record guidance for this repository.
 
 An ADR captures a human-reviewed architecture decision, its context, trade-offs, consequences, validation and traceability. It is a normative record only after explicit human approval.
 
-The seven already accepted ADRs remain authoritative only in System Design §16. Phase 0 does not transcribe them into individual ADR files.
+The seven already accepted ADRs remain authoritative only in System Design §16. Delivery D0 did not transcribe them into individual ADR files.
+
+Repository ADR index:
+
+- [ADR-GOV-001: Phase Namespace Reconciliation](ADR-GOV-001-phase-namespace-reconciliation.md) records the approved scope and terminology reconciliation for repository planning.
+- It does not transcribe, replace, or modify the seven baseline ADRs recorded in System Design §16.
 
 Future ADR files start as Proposed and require explicit human approval before they can become Accepted. An ADR proposal issue is not the accepted ADR document.
 
