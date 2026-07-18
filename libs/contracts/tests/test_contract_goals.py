@@ -66,3 +66,9 @@ def test_goal_response_frozen_assignment_fails() -> None:
     )
     with pytest.raises(ValidationError):
         response.statement = "y"
+
+
+def test_goal_create_request_frozen_assignment_fails() -> None:
+    request = GoalCreateRequest(statement="x")
+    with pytest.raises(ValidationError):
+        request.statement = "y"

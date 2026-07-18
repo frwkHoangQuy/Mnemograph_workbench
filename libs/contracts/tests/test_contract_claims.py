@@ -86,3 +86,23 @@ def test_claim_record_frozen_assignment_fails() -> None:
     )
     with pytest.raises(ValidationError):
         claim.text = "changed"
+
+
+def test_evidence_link_and_architecture_issue_frozen_assignment_fails() -> None:
+    link = EvidenceLinkRecord(
+        evidence_link_id=UUID("00000000-0000-0000-0000-000000000200"),
+        claim_id=UUID("00000000-0000-0000-0000-000000000100"),
+        evidence_passage_id=UUID("00000000-0000-0000-0000-000000000300"),
+        relationship=EvidenceRelationship.SUPPORTS,
+    )
+    with pytest.raises(ValidationError):
+        link.relationship = EvidenceRelationship.CONTRADICTS
+
+    issue = ArchitectureIssueRecord(
+        architecture_issue_id=UUID("00000000-0000-0000-0000-000000000400"),
+        claim_id=UUID("00000000-0000-0000-0000-000000000100"),
+        author=_actor(),
+        summary="Needs explicit owner",
+    )
+    with pytest.raises(ValidationError):
+        issue.summary = "changed"

@@ -83,3 +83,13 @@ def test_subgoal_response_frozen_assignment_fails() -> None:
     )
     with pytest.raises(ValidationError):
         response.statement = "y"
+
+
+def test_subgoal_create_request_frozen_assignment_fails() -> None:
+    request = SubgoalCreateRequest(
+        goal_id=UUID("00000000-0000-0000-0000-000000000001"),
+        statement="x",
+        definition_of_done="d",
+    )
+    with pytest.raises(ValidationError):
+        request.statement = "y"

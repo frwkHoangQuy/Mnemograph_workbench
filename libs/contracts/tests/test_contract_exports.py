@@ -44,6 +44,43 @@ from mnemograph_contracts import (
     ValidationErrorEnvelope,
     ValidationIssue,
 )
+from pydantic import BaseModel
+
+PUBLIC_BASE_MODELS: list[type[BaseModel]] = [
+    ActorRef,
+    GoalCreateRequest,
+    GoalResponse,
+    SubgoalCreateRequest,
+    SubgoalResponse,
+    DeliberationSessionRecord,
+    DeliberationTurnRecord,
+    UserCheckpointRecord,
+    ContinueInterventionRecord,
+    GuideInterventionRecord,
+    CorrectContextInterventionRecord,
+    ReviseScopeInterventionRecord,
+    PauseInterventionRecord,
+    StopInterventionRecord,
+    ReopenCheckpointInterventionRecord,
+    ReopenSubgoalInterventionRecord,
+    ClaimRecord,
+    EvidenceLinkRecord,
+    ArchitectureIssueRecord,
+    ContinueDeliberationCommand,
+    GuideDeliberationCommand,
+    CorrectContextCommand,
+    ReviseScopeCommand,
+    PauseDeliberationCommand,
+    StopDeliberationCommand,
+    ReopenCheckpointCommand,
+    ReopenSubgoalCommand,
+    AcceptSubgoalCommand,
+    GoalTransitionRecord,
+    SubgoalTransitionRecord,
+    DeliberationSessionTransitionRecord,
+    ValidationIssue,
+    ValidationErrorEnvelope,
+]
 
 
 def test_public_exports_available() -> None:
@@ -103,3 +140,22 @@ def test_private_symbols_not_exported() -> None:
         contracts.__getattribute__("_validation_error_to_envelope")
     with pytest.raises(AttributeError):
         contracts.__getattribute__("ContractModel")
+
+
+def test_all_public_base_model_schemas_forbid_additional_properties() -> None:
+    assert len(PUBLIC_BASE_MODELS) == 33
+    for model in PUBLIC_BASE_MODELS:
+        schema = model.model_json_schema()
+        assert schema["additionalProperties"] is False
+
+
+def test_optional_default_null_fields_schema_behavior() -> None:
+    goal_schema = GoalResponse.model_json_schema()
+    assert "approved_goal_plan_id" not in goal_schema["required"]
+    assert goal_schema["properties"]["approved_goal_plan_id"]["default"] is None
+
+    session_schema = DeliberationSessionRecord.model_json_schema()
+    assert "parent_session_id" not in session_schema["required"]
+    assert "branched_from_checkpoint_id" not in session_schema["required"]
+    assert session_schema["properties"]["parent_session_id"]["default"] is None
+    assert session_schema["properties"]["branched_from_checkpoint_id"]["default"] is None

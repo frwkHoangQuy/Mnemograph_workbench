@@ -22,25 +22,31 @@ def test_actor_ref_valid_json_uuid() -> None:
 
 
 def test_actor_ref_invalid_uuid() -> None:
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as exc:
         ActorRef.model_validate_json('{"kind":"USER","actor_id":"not-a-uuid"}')
+    assert exc.value.errors()[0]["type"] == "uuid_parsing"
+    assert tuple(exc.value.errors()[0]["loc"]) == ("actor_id",)
 
 
 def test_actor_ref_strict_uuid_in_python_mode() -> None:
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as exc:
         ActorRef.model_validate(
             {
                 "kind": ActorKind.USER,
                 "actor_id": "00000000-0000-0000-0000-000000000001",
             }
         )
+    assert exc.value.errors()[0]["type"] == "is_instance_of"
+    assert tuple(exc.value.errors()[0]["loc"]) == ("actor_id",)
 
 
 def test_actor_ref_unknown_field_forbidden() -> None:
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as exc:
         ActorRef.model_validate_json(
             '{"kind":"USER","actor_id":"00000000-0000-0000-0000-000000000001","x":1}'
         )
+    assert exc.value.errors()[0]["type"] == "extra_forbidden"
+    assert tuple(exc.value.errors()[0]["loc"]) == ("x",)
 
 
 def test_actor_ref_frozen_assignment() -> None:
