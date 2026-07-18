@@ -10,7 +10,7 @@ Delivery D1 Public Contract Vocabulary Reconciliation
 
 ## Status
 
-Proposed
+Accepted
 
 ## Date
 
@@ -22,7 +22,7 @@ Human project owner, Lead SA
 
 ## Related issue
 
-[GitHub Issue #17](https://github.com/frwkHoangQuy/Mnemograph_workbench/issues/17) (open)
+[GitHub Issue #17](https://github.com/frwkHoangQuy/Mnemograph_workbench/issues/17)
 
 ## Related baseline sections
 
@@ -37,7 +37,7 @@ Human project owner, Lead SA
 
 Delivery D1.2 public contract wire-vocabulary reconciliation.
 
-> **Proposed decision — not yet accepted.** This ADR record is a draft prepared for Lead Systems Architect and human project owner review following the human decision comment recorded on open GitHub Issue #17, selecting Dimension A option A2, Dimension B option B3, and Dimension C option C2, and confirmed by Lead Systems Architect live verification. Issue #17's selections authorize drafting and reviewing this Proposed ADR only; they do not accept ADR-DOMAIN-003 and do not authorize Delivery D1.2 implementation. Status remains Proposed until an explicit, separate human approval changes it to Accepted.
+> **Accepted decision.** On 2026-07-18, after Lead-SA review, the human project owner explicitly accepted Dimension A option A2, Dimension B option B3, and Dimension C option C2. This ADR records that accepted decision. ADR acceptance does not authorize Delivery D1.2 implementation; Issue #16 remains the current D1.2 implementation issue and is Approved for planning only.
 
 ## Context and problem
 
@@ -52,7 +52,7 @@ No accepted ADR previously reconciled either conflict. GitHub Issue #17 recorded
 ## Constraints
 
 - GitHub Issue #17 records the explicit human decision context for this ADR.
-- GitHub Issue #16 is the current Delivery D1.2 implementation issue and is Approved for planning only; this ADR does not change that status. Acceptance of this ADR would not authorize Delivery D1.2 implementation; following acceptance, Issue #16 would require a revised full implementation plan and a separate, explicit human implementation approval before any Delivery D1.2 code change proceeds. This ADR does not imply that a different or additional implementation issue is required, unless the human authority changes or decomposes Issue #16's scope.
+- GitHub Issue #16 is the current Delivery D1.2 implementation issue and is Approved for planning only; this ADR does not change that status. ADR-DOMAIN-003's acceptance does not authorize Delivery D1.2 implementation. Issue #16 requires a revised full implementation plan and a separate, explicit human implementation approval before any Delivery D1.2 code change proceeds. This ADR does not imply that a different or additional implementation issue is required, unless the human authority changes or decomposes Issue #16's scope.
 - This ADR must not modify, supersede, or reinterpret ADR-DOMAIN-001 or ADR-DOMAIN-002.
 - Delivery D1 remains bounded at `FINAL_CANDIDATE` or `STOPPED`; `ACCEPTED`, `PUBLISHING`, and `COMPLETED` remain Delivery D5 concerns and must not become D1 wire values or D1 behavior.
 - `ActorKind` remains exactly `USER`, `SCIENTIST`, `SA`, and `SYSTEM`; Moderator remains ADR-DOMAIN-002 Option B (a visible orchestration policy whose persisted mutations use `ActorKind.SYSTEM`, not a domain actor kind).
@@ -79,7 +79,7 @@ No accepted ADR previously reconciled either conflict. GitHub Issue #17 recorded
 - ADR-DOMAIN-001 D1-E states Goal progresses "through `FINAL_CANDIDATE` or `STOPPED`," that Subgoal "may be accepted or reopened only by a user command," and that Delivery D1 must not implement `ACCEPTED`, `PUBLISHING`, or `COMPLETED` behavior merely for enum compatibility.
 - ADR-DOMAIN-002 establishes that `ActorKind` remains exactly `USER`, `SCIENTIST`, `SA`, `SYSTEM`, and that Moderator is a visible orchestration policy whose persisted mutations use `ActorKind.SYSTEM`.
 - GitHub Issue #16 is the current Delivery D1.2 implementation issue and is Approved for planning only.
-- Lead Systems Architect live verification has confirmed: remote `main` is at commit `a1f08ef6c93dba03d6a21eefa317bfb34748088d`; GitHub Issue #17 is open; and its recorded human decision comment selects exactly A2 (Dimension A), B3 (Dimension B), and C2 (Dimension C).
+- During proposal review on 2026-07-18, Lead SA verified GitHub Issue #17's recorded human selection of exactly A2 (Dimension A), B3 (Dimension B), and C2 (Dimension C).
 
 ### Scientific evidence boundary
 
@@ -132,7 +132,7 @@ Both C1 and C2 satisfy ADR-DOMAIN-001 D1-E's "user command" requirement; that re
 
 ## Decision
 
-This ADR **proposes** adopting option **A2** for Dimension A, option **B3** for Dimension B, and option **C2** for Dimension C, per the human decision comment recorded on GitHub Issue #17. This decision remains **Proposed** and is not accepted until a separate, explicit human approval changes this ADR's status.
+This ADR **adopts** option **A2** for Dimension A, option **B3** for Dimension B, and option **C2** for Dimension C. The human project owner explicitly accepted these decisions on 2026-07-18 after Lead-SA review; they are normative decisions recorded by this Accepted ADR.
 
 ### Decision A (A2) — canonical D1 Goal-state wire vocabulary
 
@@ -148,7 +148,7 @@ The canonical Delivery D1 Goal-state wire vocabulary, through `FINAL_CANDIDATE` 
 - `FINAL_CANDIDATE`
 - `STOPPED`
 
-This ADR selects System Design's vocabulary as the **canonical D1 wire vocabulary** while preserving full traceability to the Charter's equivalent terms via the mapping table below. The Charter's vocabulary is **not** described as invalid or superseded — it remains the accepted product/working-agreement description of the same lifecycle; this ADR only fixes which terms would appear at the D1 contract wire level if accepted.
+This ADR selects System Design's vocabulary as the **canonical D1 wire vocabulary** while preserving full traceability to the Charter's equivalent terms via the mapping table below. The Charter's vocabulary is **not** described as invalid or superseded — it remains the accepted product/working-agreement description of the same lifecycle; this ADR fixes which terms are canonical at the D1 contract wire level.
 
 `ACCEPTED`, `PUBLISHING`, and `COMPLETED` are explicitly **excluded** from this enum; they remain Delivery D5 concerns and must not appear as D1 wire values or D1 behavior.
 
@@ -225,19 +225,15 @@ Selecting System Design §5.2's vocabulary for Decision A keeps the D1 wire voca
 
 ## Positive consequences
 
-If this ADR is accepted:
-
-- The D1.2 Goal-state and intervention-action wire vocabularies would be fully specified and traceable to both accepted baselines.
-- Neither the Charter nor the System Design would be treated as superseded; the mapping tables make the correspondence explicit and reviewable.
-- `ACCEPT_SUBGOAL`'s classification would be resolved without inventing command schema details.
-- A future Delivery D1.2 implementation batch, delivered under Issue #16's revised and separately approved implementation plan, would be able to proceed to schema-level work without needing to re-litigate these three questions.
-- The `FINAL_CANDIDATE`/`STOPPED` boundary and the Delivery D5 exclusion of `ACCEPTED`/`PUBLISHING`/`COMPLETED` would remain intact.
+- The D1.2 Goal-state and intervention-action wire vocabularies are fully specified and traceable to both accepted baselines.
+- Neither the Charter nor the System Design is treated as superseded; the mapping tables make the correspondence explicit and reviewable.
+- `ACCEPT_SUBGOAL`'s classification is resolved without inventing command schema details.
+- A future Delivery D1.2 implementation batch, delivered under Issue #16's revised and separately approved implementation plan, can proceed to schema-level work without needing to re-litigate these three questions.
+- The `FINAL_CANDIDATE`/`STOPPED` boundary and the Delivery D5 exclusion of `ACCEPTED`/`PUBLISHING`/`COMPLETED` remain intact.
 
 ## Negative consequences and risks
 
-If this ADR is accepted:
-
-- Contributors reading the Charter narrative would need to consult this ADR's mapping table to find the corresponding D1 wire token, rather than finding it directly in the Charter.
+- Contributors reading the Charter narrative need to consult this ADR's mapping table to find the corresponding D1 wire token, rather than finding it directly in the Charter.
 - The Decision B union vocabulary is one token larger than either single-source option, though this is presented as a benefit (no dropped term) rather than pure cost.
 - C2's dedicated-command-intent classification means Issue #16's future revised D1.2 implementation batch must define two command families (general intervention and Subgoal acceptance) instead of one.
 
@@ -255,17 +251,18 @@ No persistence design, migration, or data model is authorized by this ADR. The v
 
 ## Operational impact
 
-No runtime orchestration, API route, worker behavior, or Compose change is authorized by this ADR. Delivery D1.2 implementation remains unauthorized. GitHub Issue #16 remains Approved for planning only; this ADR only removes the vocabulary-level blocking questions previously identified for Issue #16's future revised implementation plan. This ADR's acceptance would not itself authorize implementation and does not require a different or additional implementation issue.
+No runtime orchestration, API route, worker behavior, or Compose change is authorized by this ADR. Delivery D1.2 implementation remains unauthorized. GitHub Issue #16 remains Approved for planning only; this ADR resolves the vocabulary-level blocking questions previously identified for Issue #16's future revised implementation plan. This Accepted ADR does not itself authorize implementation and does not require a different or additional implementation issue.
 
 ## Validation strategy
 
-For this Proposed ADR, before it can be marked Accepted:
+For this Accepted ADR:
 
-- Verify this ADR's status is Proposed everywhere it is indexed or described, until an explicit separate human approval changes it.
+- Verify this ADR's status is Accepted everywhere it is indexed or described.
 - Verify the Decision A enum contains exactly the nine listed tokens and excludes `ACCEPTED`, `PUBLISHING`, `COMPLETED`.
 - Verify the Decision B enum contains exactly the seven listed tokens and excludes `ACCEPT_SUBGOAL`.
 - Verify this ADR does not modify, supersede, or reinterpret ADR-DOMAIN-001 or ADR-DOMAIN-002, and does not alter the `ActorKind` value set or Moderator semantics.
 - Verify no baseline, dependency, lockfile, or implementation artifact is changed by this ADR.
+- Verify ADR acceptance has not changed Issue #16's Approved-for-planning-only status or authorized Delivery D1.2 implementation.
 
 If Issue #16's revised implementation plan is later separately approved by explicit human authority, future contract tests should verify: the exact Decision A and Decision B wire-token sets (including absence of Delivery D5 values and absence of `MODERATOR`); that `ACCEPT_SUBGOAL` does not appear in the intervention/checkpoint-action enum; that any Subgoal-acceptance command requires `expected_version`; and that no contract-layer validator encodes `USER`-only or other actor-based authorization. No implementation or test change is authorized by this ADR itself.
 
@@ -275,11 +272,11 @@ If a later accepted decision requires a different vocabulary or classification, 
 
 ## Rejected alternatives
 
-This Proposed ADR's proposed decision does not select, for each dimension, the following options recorded in Issue #17. This Proposed ADR supersedes no artifact; an option "not selected" here is not thereby superseded, deprecated, or rejected as a matter of record — it is simply not the option chosen by the human authority's decision on Issue #17.
+This Accepted ADR's decision does not select, for each dimension, the following options recorded in Issue #17. This Accepted ADR supersedes no artifact; an option "not selected" here is not thereby superseded, deprecated, or rejected as a matter of record — it is simply not the option chosen by the human authority's accepted decision on Issue #17.
 
-- Dimension A: A1 (Charter verbatim) and A3 (new reconciled vocabulary) are not selected under this proposed decision; A-Defer is not selected under this proposed decision.
-- Dimension B: B1 (Charter verbatim, dropping `CORRECT_CONTEXT`) and B2 (System Design verbatim, dropping `CONTINUE`) are not selected under this proposed decision; B-Defer is not selected under this proposed decision.
-- Dimension C: C1 (intervention-enum member) is not selected under this proposed decision; C-Defer is not selected under this proposed decision.
+- Dimension A: A1 (Charter verbatim) and A3 (new reconciled vocabulary) are not selected under this accepted decision; A-Defer is not selected under this accepted decision.
+- Dimension B: B1 (Charter verbatim, dropping `CORRECT_CONTEXT`) and B2 (System Design verbatim, dropping `CONTINUE`) are not selected under this accepted decision; B-Defer is not selected under this accepted decision.
+- Dimension C: C1 (intervention-enum member) is not selected under this accepted decision; C-Defer is not selected under this accepted decision.
 
 ## Open questions
 
@@ -288,7 +285,7 @@ This Proposed ADR's proposed decision does not select, for each dimension, the f
 
 ## Traceability to implementation and tests
 
-This Proposed ADR, if accepted, creates no implementation work by itself. If Issue #16's revised implementation plan is later separately approved by explicit human authority, traceability should include:
+This Accepted ADR creates no implementation work by itself. If Issue #16's revised implementation plan is later separately approved by explicit human authority, traceability should include:
 
 - contract-schema evidence that the Goal-state enum contains exactly the Decision A tokens;
 - contract-schema evidence that the intervention/checkpoint-action enum contains exactly the Decision B tokens and excludes `ACCEPT_SUBGOAL`;
@@ -298,12 +295,13 @@ This Proposed ADR, if accepted, creates no implementation work by itself. If Iss
 
 ## Human approval record
 
-- Status: Proposed
-- A2 (Dimension A), B3 (Dimension B), and C2 (Dimension C) are approved **for drafting this Proposed ADR only**, per the human decision comment recorded on GitHub Issue #17, confirmed by Lead Systems Architect live verification.
-- ADR-DOMAIN-003 itself is **not yet accepted**.
-- Delivery D1.2 **remains implementation-unauthorized**.
-- Final ADR acceptance requires a separate, explicit human approval, after Lead Systems Architect review, before this ADR's status may change from Proposed to Accepted.
-- Following any future acceptance of this ADR, GitHub Issue #16 (the current Delivery D1.2 implementation issue, Approved for planning only) would require a revised full implementation plan and a separate, explicit human implementation approval before Delivery D1.2 implementation proceeds. No additional or different implementation issue is implied unless the human authority changes or decomposes Issue #16's scope.
+- Status: Accepted
+- Accepted decisions: A2 / B3 / C2
+- Decision authority: Human project owner
+- Lead-SA review: Approved
+- Acceptance date: 2026-07-18
+- Delivery D1.2 remains implementation-unauthorized.
+- Issue #16 remains Approved for planning only. It requires a revised full implementation plan and a separate, explicit human implementation approval before Delivery D1.2 implementation proceeds. No additional or different implementation issue is implied unless the human authority changes or decomposes Issue #16's scope.
 
 ## Supersession record
 
