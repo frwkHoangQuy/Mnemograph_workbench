@@ -219,6 +219,12 @@ requires-dist = [
 name = "mnemograph-contracts"
 version = "0.0.0"
 source = { editable = "libs/contracts" }
+dependencies = [
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pydantic", specifier = "==2.13.4" }]
 
 [[package]]
 name = "mnemograph-domain"
