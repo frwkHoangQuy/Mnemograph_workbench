@@ -1,36 +1,67 @@
-from uuid import uuid4
+from typing import Any
+from uuid import UUID, uuid4
 
-from mnemograph_domain import (
-    ActorId,
-    DeliberationSessionId,
-    DeliberationTurnId,
-    GoalId,
-    GoalPlanId,
-    InterventionId,
-    SubgoalId,
-    UserCheckpointId,
-)
+import mnemograph_domain
+from mnemograph_domain import identifiers as domain_identifiers
+
+APPROVED_IDENTIFIER_NAMES = {
+    "ActorId",
+    "GoalId",
+    "GoalPlanId",
+    "SubgoalId",
+    "DeliberationSessionId",
+    "DeliberationTurnId",
+    "UserCheckpointId",
+    "InterventionId",
+}
+
+DEFERRED_IDENTIFIER_NAMES = {
+    "TransitionEventId",
+    "ClaimId",
+    "EvidenceLinkId",
+    "EvidencePassageId",
+    "ArchitectureIssueId",
+}
 
 
-def test_identifier_aliases_wrap_uuid_values() -> None:
+def _identifier_map() -> dict[str, Any]:
+    return {name: getattr(domain_identifiers, name) for name in APPROVED_IDENTIFIER_NAMES}
+
+
+def test_identifiers_module_exposes_exact_eight_approved_identifier_newtypes() -> None:
+    exported_identifier_names = {
+        name for name in vars(domain_identifiers) if name in APPROVED_IDENTIFIER_NAMES
+    }
+
+    assert exported_identifier_names == APPROVED_IDENTIFIER_NAMES
+
+
+def test_identifier_newtypes_have_uuid_supertype_and_stable_names() -> None:
+    identifiers = _identifier_map()
+
+    for name, identifier_type in identifiers.items():
+        assert identifier_type.__supertype__ is UUID
+        assert identifier_type.__name__ == name
+
+
+def test_identifier_newtypes_are_all_distinct_objects() -> None:
+    identifiers = _identifier_map()
+    identifier_ids = {id(identifier_type) for identifier_type in identifiers.values()}
+
+    assert len(identifier_ids) == len(APPROVED_IDENTIFIER_NAMES)
+
+
+def test_identifier_newtypes_preserve_runtime_uuid_values() -> None:
+    identifiers = _identifier_map()
     value = uuid4()
 
-    assert ActorId(value) == value
-    assert GoalId(value) == value
-    assert GoalPlanId(value) == value
-    assert SubgoalId(value) == value
-    assert DeliberationSessionId(value) == value
-    assert DeliberationTurnId(value) == value
-    assert UserCheckpointId(value) == value
-    assert InterventionId(value) == value
+    for identifier_type in identifiers.values():
+        assert identifier_type(value) == value
 
 
-def test_identifier_aliases_keep_stable_public_names() -> None:
-    assert ActorId.__name__ == "ActorId"
-    assert GoalId.__name__ == "GoalId"
-    assert GoalPlanId.__name__ == "GoalPlanId"
-    assert SubgoalId.__name__ == "SubgoalId"
-    assert DeliberationSessionId.__name__ == "DeliberationSessionId"
-    assert DeliberationTurnId.__name__ == "DeliberationTurnId"
-    assert UserCheckpointId.__name__ == "UserCheckpointId"
-    assert InterventionId.__name__ == "InterventionId"
+def test_deferred_identifier_names_are_absent_from_module_and_package_exports() -> None:
+    package_exports = set(mnemograph_domain.__all__)
+
+    for name in DEFERRED_IDENTIFIER_NAMES:
+        assert not hasattr(domain_identifiers, name)
+        assert name not in package_exports
