@@ -1,4 +1,5 @@
 from dataclasses import is_dataclass
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from mnemograph_contracts.actors import ActorRef as ContractActorRef
@@ -8,7 +9,9 @@ from mnemograph_contracts.enums import DeliberationSessionState as ContractDelib
 from mnemograph_contracts.enums import GoalState as ContractGoalState
 from mnemograph_contracts.enums import InterventionKind as ContractInterventionKind
 from mnemograph_contracts.enums import SubgoalAcceptanceStatus as ContractSubgoalAcceptanceStatus
+from mnemograph_contracts.events import GoalTransitionRecord as ContractGoalTransitionRecord
 from mnemograph_contracts.goals import GoalResponse
+from mnemograph_contracts.subgoals import SubgoalResponse
 from mnemograph_domain import (
     ActorId,
     ActorKind,
@@ -18,8 +21,12 @@ from mnemograph_domain import (
     DeliberationSessionState,
     GoalId,
     GoalState,
+    GoalTransitionRecord,
     InterventionKind,
     SubgoalAcceptanceStatus,
+    SubgoalId,
+    TransitionEventId,
+    create_subgoal,
     make_aggregate_version,
 )
 
@@ -111,3 +118,60 @@ def test_domain_and_contract_actor_representations_are_independent_types() -> No
     assert ContractActorRef.__module__.startswith("mnemograph_contracts")
     assert is_dataclass(ActorRef)
     assert not is_dataclass(ContractActorRef)
+
+
+def test_goal_transition_record_maps_explicitly_to_contract_native_values() -> None:
+    domain_actor = ActorRef(ActorKind.SYSTEM, ActorId(uuid4()))
+    transition = GoalTransitionRecord(
+        event_id=TransitionEventId(uuid4()),
+        goal_id=GoalId(uuid4()),
+        version=AggregateVersion(3),
+        previous_state=GoalState.SCOPING,
+        next_state=GoalState.AWAITING_PLAN_APPROVAL,
+        actor=domain_actor,
+        occurred_at=datetime(2026, 7, 20, 8, tzinfo=UTC),
+    )
+    assert transition.previous_state is not None
+
+    contract_transition = ContractGoalTransitionRecord.model_validate(
+        {
+            "event_id": transition.event_id,
+            "goal_id": transition.goal_id,
+            "version": transition.version,
+            "previous_state": ContractGoalState(transition.previous_state.value),
+            "next_state": ContractGoalState(transition.next_state.value),
+            "actor": {
+                "kind": ContractActorKind(transition.actor.kind.value),
+                "actor_id": transition.actor.actor_id,
+            },
+            "occurred_at": transition.occurred_at,
+        },
+        strict=True,
+    )
+
+    assert contract_transition.event_id == transition.event_id
+    assert contract_transition.actor.kind is ContractActorKind.SYSTEM
+    assert contract_transition.next_state is ContractGoalState.AWAITING_PLAN_APPROVAL
+
+
+def test_subgoal_maps_explicitly_to_contract_response_including_identity_and_version() -> None:
+    subgoal = create_subgoal(
+        SubgoalId(uuid4()), GoalId(uuid4()), "Question", "Answer with evidence"
+    )
+
+    response = SubgoalResponse.model_validate(
+        {
+            "subgoal_id": subgoal.subgoal_id,
+            "goal_id": subgoal.goal_id,
+            "statement": subgoal.statement,
+            "definition_of_done": subgoal.definition_of_done,
+            "version": subgoal.version,
+            "acceptance_status": ContractSubgoalAcceptanceStatus(subgoal.acceptance_status.value),
+        },
+        strict=True,
+    )
+
+    assert response.subgoal_id == subgoal.subgoal_id
+    assert response.goal_id == subgoal.goal_id
+    assert response.version == subgoal.version
+    assert response.acceptance_status is ContractSubgoalAcceptanceStatus.NOT_ACCEPTED
