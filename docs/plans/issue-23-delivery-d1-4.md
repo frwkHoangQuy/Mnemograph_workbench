@@ -1,38 +1,37 @@
-# Delivery D1.4 Final Implementation Plan — Issue #23 — v1.4
+# Delivery D1.4 Final Implementation Plan — Issue #23 — v1.5
 
 Status: **DRAFT PLAN FOR LEAD-SA AND HUMAN REVIEW. NOT AN IMPLEMENTATION.**
 
 Implementation authorization: **NOT APPROVED.**
 
-This is a complete, standalone revision, edited in place in the same file
-that held Plan v1.1. It supersedes Plan v1.2 in full and does not require
-an earlier plan to be read alongside it. It preserves every accepted v1.2
-decision except direct consistency edits required by "Lead-SA R3" (R3-01
-and R3-02) and "Lead-SA R4": the inherited D1.3 boundary tests are
-reconciled with the authorized identifier/datetime surface, the three public
-result types receive complete direct-construction invariants, and the public
-structural factory `create_subgoal` is restored to the package-root API.
+This is a complete, standalone revision. Plan v1.5 supersedes Plan v1.4 in
+full and does not require an earlier plan to be read alongside it. It
+preserves every substantive R1, R2, R3, and R4 decision. In particular, it
+retains the R3-01 boundary-test reconciliation, the R3-02 complete
+direct-construction invariants for the three public result types, and the
+R4 restoration of the public structural factory `create_subgoal` to the
+package-root API.
 
-This file remains at `tmp/delivery-d1-4-plan-v1.1.md` — the filename is
-unchanged, per the R2 review's explicit instruction: "The filename remains
-unchanged; update the document's internal version to v1.2." This v1.4 edit
-session's own instructions authorized editing only this exact, already
-git-ignored target file. No other file was created, edited, staged,
-committed, or pushed. No branch was created or switched.
+**Current planning-artifact provenance.** The canonical active Plan v1.5
+artifact is this tracked file:
+`docs/plans/issue-23-delivery-d1-4.md`. Its planning-only branch is
+`planning/23-d1-4-goal-plan`. The branch and tracked file exist only to
+support plan review. This planning branch must never be merged into `main`,
+and their existence grants no implementation authorization.
 
-**Disclosure required by R1-11 (carried forward, unchanged in substance).**
-Plan v1.0 was written to a separate file,
-`tmp/delivery-d1.4-final-implementation-plan-v1.0.md`, under a prior
+**Disclosure required by R1-11 (historical provenance; carried forward,
+unchanged in substance).** Plan v1.0 was written to the historical ignored
+file `tmp/delivery-d1.4-final-implementation-plan-v1.0.md` under a prior
 planning turn whose own prompt (per the R1 review) prohibited creating or
 writing repository files, including ignored files — that write was a
 planning-process deviation, not an equivalence between "writing an ignored
 file" and "no workspace mutation." Plan v1.1 was subsequently written to
-this file, `tmp/delivery-d1-4-plan-v1.1.md`, under an explicit
-authorization permitting exactly that one write. This v1.4 revision is an
-in-place edit of that same, already-authorized file, made under this
-turn's explicit authorization to edit it. No new file has been created to
-produce v1.4, and no cleanup or deletion of the v1.0 file is authorized or
-performed by this document.
+the historical ignored file `tmp/delivery-d1-4-plan-v1.1.md` under an
+explicit authorization permitting exactly that one write. Neither historical
+ignored file is the current or canonical Plan v1.5 artifact. The reviewed
+artifact was migrated to the tracked planning path by commit
+`11a30b7b6ff22995e51dbc5de51a510acdbb2817`; the R4 correction was then
+recorded by commit `7757c80ac3bc7561891cf8f82110cad78dd70b3e`.
 
 ---
 
@@ -62,7 +61,7 @@ entirely deferred, unchanged from R1.
 
 **Disposition of the R1 review (carried forward).** Every R1-01 through
 R1-11 requirement was treated as binding for v1.1 and remains satisfied by
-v1.4 except where R2 explicitly narrows or reverses a v1.1 choice (noted
+v1.5 except where R2 explicitly narrows or reverses a v1.1 choice (noted
 per DR ID in Section D). The R1-accepted parts of v1.0 — the checkpoint,
 the `DELIBERATING` stop boundary, the accepted `GoalState` vocabulary,
 USER-only revision/approval, `SYSTEM` as the recommended orchestration
@@ -74,7 +73,7 @@ implementation commit followed only by separate correction commits if
 later authorized — remain preserved.
 
 **Disposition of the R2 review.** Every R2-01 through R2-07 requirement is
-treated as binding for this v1.4 revision. Section D marks, for every DR
+treated as binding for this v1.5 revision. Section D marks, for every DR
 ID, whether R2 left it Unchanged, further Superseded, Removed, or newly
 introduced it, with an explicit R2 cross-reference. The R2 review's
 "Accepted corrections" list is preserved unless a specific R2 item
@@ -87,7 +86,7 @@ semantic-only runtime validation policy; the exact `DELIBERATING` stop
 boundary; and the dependency/contracts/infrastructure exclusions.
 
 **Disposition of the R3 correction.** R3-01 and R3-02 are binding for this
-v1.4 revision. R3-01 reconciles the inherited D1.3 boundary-test baseline:
+v1.5 revision. R3-01 reconciles the inherited D1.3 boundary-test baseline:
 `TransitionEventId` is no longer forbidden, the obsolete blanket ban on
 domain `datetime` imports and datetime-related public helpers is replaced,
 and a narrow allowlist asserts the sole authorized datetime surface
@@ -110,58 +109,34 @@ cannot legally exist without at least the option of referencing
 independently created `Subgoal`s. Splitting this into separate commits
 would leave intermediate, non-independently-testable states.
 
-**Implementation authorization.** This document is a plan only. It
-authorizes nothing beyond this turn's single permitted edit to this
-existing, already-authorized file. A separate, explicit human
-implementation approval is required after Lead-SA review, exactly as
-occurred for Delivery D1.3.
+**Implementation authorization.** This document is a plan only. Its tracked
+review branch and canonical artifact authorize no implementation activity.
+A separate, explicit human implementation approval is required after Lead-SA
+review, exactly as occurred for Delivery D1.3.
 
 ---
 
 ## B. Preflight evidence
 
-**v1.1 preflight (prior session; re-verified independently in this v1.2
-edit session below).**
+**Plan v1.5 correction-session preflight (before this edit).**
 
 | Check | Command | Result |
 |---|---|---|
-| Current branch | `git branch --show-current` | `main` |
-| Local HEAD | `git rev-parse HEAD` | `eb43e1248b563c3e3117a971deacb140092e908f` |
-| Local `main` | `git rev-parse main` | `eb43e1248b563c3e3117a971deacb140092e908f` |
-| `origin/main` tracking ref | `git rev-parse refs/remotes/origin/main` | `eb43e1248b563c3e3117a971deacb140092e908f` |
-| Remote `main` (read-only remote query) | `git ls-remote origin refs/heads/main` | `eb43e1248b563c3e3117a971deacb140092e908f  refs/heads/main` |
-| Tracked working tree | `git status --short` | *(empty — clean)* |
-| Unstaged diff | `git diff --name-status` | *(empty)* |
-| Staged diff | `git diff --cached --name-status` | *(empty)* |
-| Target file pre-existence | `Test-Path tmp/delivery-d1-4-plan-v1.1.md` | `False` (did not exist before the v1.1 write) |
-| Target file ignore status | `git check-ignore -v tmp/delivery-d1-4-plan-v1.1.md` | `.gitignore:49:tmp/  tmp/delivery-d1-4-plan-v1.1.md` (ignored) |
+| Repository root | `git rev-parse --show-toplevel` | `D:/Dev/mnemograph-workbench` |
+| Current branch | `git branch --show-current` | `planning/23-d1-4-goal-plan` |
+| `origin/main` | `git rev-parse origin/main` | `eb43e1248b563c3e3117a971deacb140092e908f` |
+| Local planning branch | `git rev-parse planning/23-d1-4-goal-plan` | `7757c80ac3bc7561891cf8f82110cad78dd70b3e` |
+| Remote planning branch | `git rev-parse origin/planning/23-d1-4-goal-plan` | `7757c80ac3bc7561891cf8f82110cad78dd70b3e` |
+| Working tree and index | `git status --porcelain=v1` | *(empty — clean)* |
+| Canonical artifact | `git ls-files --error-unmatch docs/plans/issue-23-delivery-d1-4.md` | tracked file exists |
+| R4 parent | `git rev-parse 7757c80ac3bc7561891cf8f82110cad78dd70b3e^` | `11a30b7b6ff22995e51dbc5de51a510acdbb2817` |
+| R4 changed paths | `git diff-tree --no-commit-id --name-only -r 7757c80ac3bc7561891cf8f82110cad78dd70b3e` | only `docs/plans/issue-23-delivery-d1-4.md` |
 
-**v1.2 edit-session preflight (this session, read-only, no `git fetch`).**
-
-| Check | Command | Result |
-|---|---|---|
-| Current branch | `git branch --show-current` | `main` |
-| Local HEAD | `git rev-parse HEAD` | `eb43e1248b563c3e3117a971deacb140092e908f` |
-| Local `main` | `git rev-parse main` | `eb43e1248b563c3e3117a971deacb140092e908f` |
-| `origin/main` tracking ref | `git rev-parse refs/remotes/origin/main` | `eb43e1248b563c3e3117a971deacb140092e908f` |
-| Remote `main` (read-only remote query) | `git ls-remote origin refs/heads/main` | `eb43e1248b563c3e3117a971deacb140092e908f  refs/heads/main` |
-| Tracked working tree | `git status --short` | *(empty — clean)* |
-| Unstaged diff | `git diff --name-status` | *(empty)* |
-| Staged diff | `git diff --cached --name-status` | *(empty)* |
-| Target file existence | `Test-Path tmp/delivery-d1-4-plan-v1.1.md` | `True` (exists, as required for an in-place edit) |
-| Target file ignore status | `git check-ignore -v tmp/delivery-d1-4-plan-v1.1.md` | `.gitignore:49:tmp/  tmp/delivery-d1-4-plan-v1.1.md` (ignored) |
-
-All five SHA sources again agree exactly with the required checkpoint
-`main@eb43e1248b563c3e3117a971deacb140092e908f`; the tracked tree and
-index remain clean; the target file exists (as required for an in-place
-edit, unlike the v1.1 preflight where it correctly did not yet exist) and
-remains git-ignored. No blocker condition is triggered.
-
-Issue #23's live comment thread was fetched in full in this session,
-including "Lead-SA review — Delivery D1.4 Plan v1.1 — changes requested
-R2," which required a cache-busting query parameter to retrieve past an
-initially stale snapshot — the same pattern previously observed when
-fetching the R1 comment.
+The historical v1.0 and v1.1 ignored files named in the R1-11 disclosure
+are retained solely as historical provenance. The current active artifact is
+the tracked canonical path above, on the planning-only branch above. The
+branch and file support plan review only; the branch must never be merged
+into `main`, and neither grants implementation authorization.
 
 ---
 
@@ -371,7 +346,7 @@ identifier, no timestamp, and it emits no transition record. Constructs
 version=make_aggregate_version(0), statement=statement,
 definition_of_done=definition_of_done,
 acceptance_status=SubgoalAcceptanceStatus.NOT_ACCEPTED)`. `CreateSubgoalCommand`
-is **removed** (R2-01) — it does not exist in v1.4.
+is **removed** (R2-01) — it does not exist in Plan v1.5.
 
 ### F.5 `goal_plans.py` (new — DR-02, DR-06, DR-15, DR-16, DR-16a, DR-16b, DR-22)
 
@@ -583,7 +558,7 @@ linkage; and `GoalApprovalResult` requires `DELIBERATING` and exact
 approved-plan-to-Goal ID/version linkage. Every result invariant, including
 the existing transition consistency checks, raises
 `InvalidStructuralInputError`. `GoalMutationResult` is **removed** — it
-does not exist in v1.4.
+does not exist in Plan v1.5.
 
 ### F.9 `goal_mutations.py` (new — the five Goal mutation functions)
 
@@ -1148,13 +1123,17 @@ behavior beyond first entry into `DELIBERATING`.
 
 **Authorization gate.**
 
-Plan v1.4 is submitted for Lead-SA and human review. No decision in
-Section D or Q is self-approved by this planning process. No branch has
-been created, no tracked repository file has been edited, and no
-implementation or tracked repository change is authorized by this plan.
-The only filesystem effect of producing this document is the single,
-explicitly authorized in-place edit of `tmp/delivery-d1-4-plan-v1.1.md`
-itself.
+Plan v1.5 is submitted for Lead-SA and human review. No decision in
+Section D or Q is self-approved by this planning process. The canonical
+active artifact is the tracked file
+`docs/plans/issue-23-delivery-d1-4.md` on the planning-only branch
+`planning/23-d1-4-goal-plan`. The branch and tracked file exist only to
+support plan review; this planning branch must never be merged into `main`;
+and their existence grants no implementation authorization. The planning
+history includes the tracked-artifact migration commit
+`11a30b7b6ff22995e51dbc5de51a510acdbb2817` and R4 correction commit
+`7757c80ac3bc7561891cf8f82110cad78dd70b3e`. Neither historical ignored
+`tmp/` artifact identified in the R1-11 disclosure is current or canonical.
 
 **Implementation authorization remains NOT APPROVED.**
 
