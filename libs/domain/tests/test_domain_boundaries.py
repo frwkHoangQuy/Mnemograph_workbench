@@ -21,35 +21,10 @@ APPROVED_EXPORTS = {
     "AggregateVersion",
     "make_aggregate_version",
     "ActorRef",
-    "TransitionEventId",
-    "GoalVersionConflictError",
-    "IllegalGoalTransitionError",
-    "ActorNotPermittedError",
-    "InvalidStructuralInputError",
-    "Subgoal",
-    "PlanSubgoalEntry",
-    "GoalDecompositionProposal",
-    "ApprovedGoalPlan",
-    "Goal",
-    "CreateGoalCommand",
-    "BeginScopingCommand",
-    "ProposeGoalDecompositionCommand",
-    "ReviseGoalPlanCommand",
-    "ApproveGoalPlanCommand",
-    "GoalTransitionRecord",
-    "GoalTransitionResult",
-    "GoalProposalResult",
-    "GoalApprovalResult",
-    "create_goal",
-    "create_subgoal",
-    "begin_scoping",
-    "propose_goal_decomposition",
-    "revise_goal_plan",
-    "approve_goal_plan",
-    "ensure_aware_utc",
 }
 
 FORBIDDEN_EXPORTS = {
+    "TransitionEventId",
     "ClaimId",
     "EvidenceLinkId",
     "EvidencePassageId",
@@ -133,21 +108,19 @@ def test_forbidden_and_deferred_symbols_are_not_exported() -> None:
         assert symbol_name not in exports
 
 
-def test_domain_datetime_surface_is_narrow_and_standard_library_only() -> None:
+def test_domain_production_package_has_no_datetime_imports_or_datetime_public_helpers() -> None:
     package_root = _repo_root() / "libs" / "domain" / "src" / "mnemograph_domain"
     python_files = sorted(package_root.rglob("*.py"))
-    datetime_importers: set[str] = set()
+    exports = set(mnemograph_domain.__all__)
 
     for module_file in python_files:
         source = module_file.read_text(encoding="utf-8")
-        if "datetime" in _import_roots(source):
-            datetime_importers.add(module_file.name)
+        assert "datetime" not in _import_roots(source)
 
-    assert datetime_importers == {"commands.py", "datetimes.py", "transitions.py"}
-    assert "ensure_aware_utc" in mnemograph_domain.__all__
+    assert all("datetime" not in symbol_name.lower() for symbol_name in exports)
 
 
-def test_domain_public_exception_surface_is_exactly_the_approved_four_classes() -> None:
+def test_domain_public_exports_have_no_custom_exception_surface() -> None:
     exported_objects = [
         getattr(mnemograph_domain, symbol_name) for symbol_name in mnemograph_domain.__all__
     ]
@@ -157,20 +130,4 @@ def test_domain_public_exception_surface_is_exactly_the_approved_four_classes() 
         if isinstance(exported_object, type) and issubclass(exported_object, BaseException)
     }
 
-    assert exported_exception_classes == {
-        mnemograph_domain.GoalVersionConflictError,
-        mnemograph_domain.IllegalGoalTransitionError,
-        mnemograph_domain.ActorNotPermittedError,
-        mnemograph_domain.InvalidStructuralInputError,
-    }
-
-
-def test_domain_mutations_have_no_hidden_clock_or_identifier_generation() -> None:
-    package_root = _repo_root() / "libs" / "domain" / "src" / "mnemograph_domain"
-    production_source = "\n".join(
-        file.read_text(encoding="utf-8") for file in sorted(package_root.rglob("*.py"))
-    )
-
-    assert "uuid4" not in production_source
-    assert "datetime.now" not in production_source
-    assert "datetime.utcnow" not in production_source
+    assert not exported_exception_classes

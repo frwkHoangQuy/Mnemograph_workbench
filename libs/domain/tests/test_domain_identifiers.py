@@ -13,10 +13,10 @@ APPROVED_IDENTIFIER_NAMES = {
     "DeliberationTurnId",
     "UserCheckpointId",
     "InterventionId",
-    "TransitionEventId",
 }
 
 DEFERRED_IDENTIFIER_NAMES = {
+    "TransitionEventId",
     "ClaimId",
     "EvidenceLinkId",
     "EvidencePassageId",
@@ -38,7 +38,7 @@ def _uuid_newtype_name_set() -> set[str]:
     return names
 
 
-def test_identifiers_module_exposes_exact_nine_approved_identifier_newtypes() -> None:
+def test_identifiers_module_exposes_exact_eight_approved_identifier_newtypes() -> None:
     exported_identifier_names = _uuid_newtype_name_set()
 
     assert exported_identifier_names == APPROVED_IDENTIFIER_NAMES
