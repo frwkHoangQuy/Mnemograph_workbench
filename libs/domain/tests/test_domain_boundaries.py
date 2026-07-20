@@ -1,5 +1,4 @@
 import ast
-import importlib.util
 import sys
 from pathlib import Path
 
@@ -64,17 +63,6 @@ def _import_roots(module_source: str) -> list[str]:
     return roots
 
 
-def _is_stdlib_module(module_root: str) -> bool:
-    if module_root in sys.stdlib_module_names:
-        return True
-
-    module_spec = importlib.util.find_spec(module_root)
-    if module_spec is None or module_spec.origin is None:
-        return False
-
-    return "site-packages" not in module_spec.origin and "dist-packages" not in module_spec.origin
-
-
 def test_domain_python_files_import_only_stdlib_or_domain_modules() -> None:
     package_root = _repo_root() / "libs" / "domain" / "src" / "mnemograph_domain"
     python_files = sorted(package_root.rglob("*.py"))
@@ -85,7 +73,7 @@ def test_domain_python_files_import_only_stdlib_or_domain_modules() -> None:
         module_source = module_file.read_text(encoding="utf-8")
         module_name = _module_name_from_file(package_root, module_file)
         for import_root in _import_roots(module_source):
-            assert import_root == "mnemograph_domain" or _is_stdlib_module(import_root), (
+            assert import_root == "mnemograph_domain" or import_root in sys.stdlib_module_names, (
                 f"{module_name} imports disallowed dependency root {import_root}"
             )
 
@@ -133,11 +121,13 @@ def test_domain_production_package_has_no_datetime_imports_or_datetime_public_he
 
 
 def test_domain_public_exports_have_no_custom_exception_surface() -> None:
-    exports = set(mnemograph_domain.__all__)
-    exception_names = {
-        symbol_name
-        for symbol_name in exports
-        if symbol_name.endswith("Error") or symbol_name.endswith("Exception")
+    exported_objects = [
+        getattr(mnemograph_domain, symbol_name) for symbol_name in mnemograph_domain.__all__
+    ]
+    exported_exception_classes = {
+        exported_object
+        for exported_object in exported_objects
+        if isinstance(exported_object, type) and issubclass(exported_object, BaseException)
     }
 
-    assert not exception_names
+    assert not exported_exception_classes

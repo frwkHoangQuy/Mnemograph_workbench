@@ -28,10 +28,18 @@ def _identifier_map() -> dict[str, Any]:
     return {name: getattr(domain_identifiers, name) for name in APPROVED_IDENTIFIER_NAMES}
 
 
+def _uuid_newtype_name_set() -> set[str]:
+    names: set[str] = set()
+
+    for name, value in vars(domain_identifiers).items():
+        if getattr(value, "__supertype__", None) is UUID:
+            names.add(name)
+
+    return names
+
+
 def test_identifiers_module_exposes_exact_eight_approved_identifier_newtypes() -> None:
-    exported_identifier_names = {
-        name for name in vars(domain_identifiers) if name in APPROVED_IDENTIFIER_NAMES
-    }
+    exported_identifier_names = _uuid_newtype_name_set()
 
     assert exported_identifier_names == APPROVED_IDENTIFIER_NAMES
 
