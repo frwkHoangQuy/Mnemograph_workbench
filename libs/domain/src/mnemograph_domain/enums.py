@@ -1,0 +1,41 @@
+from enum import StrEnum
+
+
+class ActorKind(StrEnum):
+    USER = "USER"
+    SCIENTIST = "SCIENTIST"
+    SA = "SA"
+    SYSTEM = "SYSTEM"
+
+
+class GoalState(StrEnum):
+    DRAFT = "DRAFT"
+    SCOPING = "SCOPING"
+    AWAITING_PLAN_APPROVAL = "AWAITING_PLAN_APPROVAL"
+    DELIBERATING = "DELIBERATING"
+    AWAITING_USER = "AWAITING_USER"
+    PAUSED = "PAUSED"
+    CROSS_GOAL_REVIEW = "CROSS_GOAL_REVIEW"
+    FINAL_CANDIDATE = "FINAL_CANDIDATE"
+    STOPPED = "STOPPED"
+
+
+class SubgoalAcceptanceStatus(StrEnum):
+    NOT_ACCEPTED = "NOT_ACCEPTED"
+    USER_ACCEPTED = "USER_ACCEPTED"
+
+
+class DeliberationSessionState(StrEnum):
+    SESSION_ACTIVE = "SESSION_ACTIVE"
+    SESSION_PAUSED = "SESSION_PAUSED"
+    SESSION_STOPPED = "SESSION_STOPPED"
+
+
+class InterventionKind(StrEnum):
+    GUIDE = "GUIDE"
+    REVISE_SCOPE = "REVISE_SCOPE"
+    PAUSE = "PAUSE"
+    STOP = "STOP"
+    REOPEN = "REOPEN"
+    CONTINUE = "CONTINUE"
+    CORRECT_CONTEXT = "CORRECT_CONTEXT"
