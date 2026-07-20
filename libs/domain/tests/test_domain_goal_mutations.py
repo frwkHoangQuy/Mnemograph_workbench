@@ -14,6 +14,7 @@ from mnemograph_domain import (
     BeginScopingCommand,
     CreateGoalCommand,
     Goal,
+    GoalDecompositionProposal,
     GoalId,
     GoalPlanId,
     GoalState,
@@ -111,19 +112,21 @@ def _assert_rejected_atomically(
     operation: Callable[[], object],
     exception_type: type[Exception],
     goal: Goal,
-    proposal: object | None = None,
+    proposal: GoalDecompositionProposal | None = None,
 ) -> None:
-    original_goal = goal
-    original_proposal = proposal
+    goal_snapshot = replace(goal)
+    proposal_snapshot = replace(proposal) if proposal is not None else None
+
+    assert goal_snapshot is not goal
+    if proposal is not None:
+        assert proposal_snapshot is not proposal
 
     with pytest.raises(exception_type):
         operation()
 
-    assert goal is original_goal
-    assert goal == original_goal
+    assert goal == goal_snapshot
     if proposal is not None:
-        assert proposal is original_proposal
-        assert proposal == original_proposal
+        assert proposal == proposal_snapshot
 
 
 def test_legal_flow_reaches_but_does_not_exceed_deliberating() -> None:
@@ -516,7 +519,7 @@ def test_proposal_requires_exact_subgoal_entry_set(case: str) -> None:
 
 def test_rejection_never_mutates_original_values() -> None:
     goal = _created_goal()
-    snapshot = goal
+    snapshot = replace(goal)
     with pytest.raises(GoalVersionConflictError):
         begin_scoping(
             goal,
@@ -528,7 +531,7 @@ def test_rejection_never_mutates_original_values() -> None:
                 NOW,
             ),
         )
-    assert goal is snapshot
+    assert goal == snapshot
     assert goal.state is GoalState.DRAFT
 
 
