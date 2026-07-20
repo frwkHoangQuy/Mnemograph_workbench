@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
@@ -13,9 +14,11 @@ from mnemograph_domain import (
     BeginScopingCommand,
     CreateGoalCommand,
     Goal,
+    GoalDecompositionProposal,
     GoalId,
     GoalPlanId,
     GoalState,
+    GoalTransitionRecord,
     GoalVersionConflictError,
     IllegalGoalTransitionError,
     InvalidStructuralInputError,
@@ -34,6 +37,7 @@ from mnemograph_domain import (
 )
 
 NOW = datetime(2026, 7, 20, 8, tzinfo=UTC)
+LOCAL_TIME = datetime(2026, 7, 20, 15, 0, tzinfo=timezone(timedelta(hours=7)))
 
 
 def _actor(kind: ActorKind) -> ActorRef:
@@ -83,6 +87,46 @@ def _proposal_result(goal: Goal | None = None):  # type: ignore[no-untyped-def]
             occurred_at=NOW,
         ),
     )
+
+
+def _assert_transition(
+    transition: GoalTransitionRecord,
+    *,
+    goal: Goal,
+    event_id: TransitionEventId,
+    previous_state: GoalState | None,
+    next_state: GoalState,
+    actor: ActorRef,
+    occurred_at: datetime,
+) -> None:
+    assert transition.event_id == event_id
+    assert transition.goal_id == goal.goal_id
+    assert transition.version == goal.version
+    assert transition.previous_state is previous_state
+    assert transition.next_state is next_state
+    assert transition.actor == actor
+    assert transition.occurred_at == occurred_at.astimezone(UTC)
+
+
+def _assert_rejected_atomically(
+    operation: Callable[[], object],
+    exception_type: type[Exception],
+    goal: Goal,
+    proposal: GoalDecompositionProposal | None = None,
+) -> None:
+    goal_snapshot = replace(goal)
+    proposal_snapshot = replace(proposal) if proposal is not None else None
+
+    assert goal_snapshot is not goal
+    if proposal is not None:
+        assert proposal_snapshot is not proposal
+
+    with pytest.raises(exception_type):
+        operation()
+
+    assert goal == goal_snapshot
+    if proposal is not None:
+        assert proposal == proposal_snapshot
 
 
 def test_legal_flow_reaches_but_does_not_exceed_deliberating() -> None:
@@ -475,7 +519,7 @@ def test_proposal_requires_exact_subgoal_entry_set(case: str) -> None:
 
 def test_rejection_never_mutates_original_values() -> None:
     goal = _created_goal()
-    snapshot = goal
+    snapshot = replace(goal)
     with pytest.raises(GoalVersionConflictError):
         begin_scoping(
             goal,
@@ -487,7 +531,7 @@ def test_rejection_never_mutates_original_values() -> None:
                 NOW,
             ),
         )
-    assert goal is snapshot
+    assert goal == snapshot
     assert goal.state is GoalState.DRAFT
 
 
@@ -506,3 +550,503 @@ def test_no_later_delivery_goal_states_exist() -> None:
     assert not hasattr(GoalState, "ACCEPTED")
     assert not hasattr(GoalState, "PUBLISHING")
     assert not hasattr(GoalState, "COMPLETED")
+
+
+def test_direct_approval_path_records_every_successful_mutation_value() -> None:
+    goal_id = GoalId(uuid4())
+    plan_id = GoalPlanId(uuid4())
+    subgoal = create_subgoal(SubgoalId(uuid4()), goal_id, "Subquestion", "Resolve it")
+    entries = (PlanSubgoalEntry(subgoal.subgoal_id, ()),)
+
+    create_actor = _actor(ActorKind.USER)
+    create_event_id = TransitionEventId(uuid4())
+    created = create_goal(
+        CreateGoalCommand(goal_id, "Research question", create_actor, create_event_id, LOCAL_TIME)
+    )
+    assert created.goal.goal_id == goal_id
+    assert created.goal.state is GoalState.DRAFT
+    assert created.goal.version == 0
+    assert created.goal.current_proposal_plan_id is None
+    assert created.goal.current_proposal_plan_version is None
+    assert created.goal.approved_goal_plan_id is None
+    assert created.goal.approved_goal_plan_version is None
+    _assert_transition(
+        created.transition,
+        goal=created.goal,
+        event_id=create_event_id,
+        previous_state=None,
+        next_state=GoalState.DRAFT,
+        actor=create_actor,
+        occurred_at=LOCAL_TIME,
+    )
+
+    scoping_actor = _actor(ActorKind.SYSTEM)
+    scoping_event_id = TransitionEventId(uuid4())
+    scoped = begin_scoping(
+        created.goal,
+        BeginScopingCommand(
+            goal_id, scoping_actor, created.goal.version, scoping_event_id, LOCAL_TIME
+        ),
+    )
+    assert scoped.goal.goal_id == goal_id
+    assert scoped.goal.state is GoalState.SCOPING
+    assert scoped.goal.version == 1
+    assert scoped.goal.current_proposal_plan_id is None
+    assert scoped.goal.current_proposal_plan_version is None
+    assert scoped.goal.approved_goal_plan_id is None
+    assert scoped.goal.approved_goal_plan_version is None
+    _assert_transition(
+        scoped.transition,
+        goal=scoped.goal,
+        event_id=scoping_event_id,
+        previous_state=GoalState.DRAFT,
+        next_state=GoalState.SCOPING,
+        actor=scoping_actor,
+        occurred_at=LOCAL_TIME,
+    )
+
+    proposal_actor = _actor(ActorKind.SYSTEM)
+    proposal_event_id = TransitionEventId(uuid4())
+    proposed = propose_goal_decomposition(
+        scoped.goal,
+        ProposeGoalDecompositionCommand(
+            goal_id,
+            proposal_actor,
+            scoped.goal.version,
+            plan_id,
+            (subgoal,),
+            entries,
+            proposal_event_id,
+            LOCAL_TIME,
+        ),
+    )
+    assert proposed.goal.goal_id == goal_id
+    assert proposed.goal.state is GoalState.AWAITING_PLAN_APPROVAL
+    assert proposed.goal.version == 2
+    assert proposed.goal.current_proposal_plan_id == plan_id
+    assert proposed.goal.current_proposal_plan_version == 0
+    assert proposed.goal.approved_goal_plan_id is None
+    assert proposed.goal.approved_goal_plan_version is None
+    assert proposed.proposal.plan_id == plan_id
+    assert proposed.proposal.goal_id == goal_id
+    assert proposed.proposal.version == 0
+    assert proposed.proposal.entries == entries
+    _assert_transition(
+        proposed.transition,
+        goal=proposed.goal,
+        event_id=proposal_event_id,
+        previous_state=GoalState.SCOPING,
+        next_state=GoalState.AWAITING_PLAN_APPROVAL,
+        actor=proposal_actor,
+        occurred_at=LOCAL_TIME,
+    )
+
+    approval_actor = _actor(ActorKind.USER)
+    approval_event_id = TransitionEventId(uuid4())
+    approved = approve_goal_plan(
+        proposed.goal,
+        proposed.proposal,
+        ApproveGoalPlanCommand(
+            goal_id, approval_actor, proposed.goal.version, approval_event_id, LOCAL_TIME
+        ),
+    )
+    assert approved.goal.goal_id == goal_id
+    assert approved.goal.state is GoalState.DELIBERATING
+    assert approved.goal.version == 3
+    assert approved.goal.current_proposal_plan_id is None
+    assert approved.goal.current_proposal_plan_version is None
+    assert approved.goal.approved_goal_plan_id == plan_id
+    assert approved.goal.approved_goal_plan_version == 0
+    assert approved.approved_plan.plan_id == proposed.proposal.plan_id
+    assert approved.approved_plan.goal_id == proposed.proposal.goal_id
+    assert approved.approved_plan.version == proposed.proposal.version
+    assert approved.approved_plan.entries == proposed.proposal.entries == entries
+    _assert_transition(
+        approved.transition,
+        goal=approved.goal,
+        event_id=approval_event_id,
+        previous_state=GoalState.AWAITING_PLAN_APPROVAL,
+        next_state=GoalState.DELIBERATING,
+        actor=approval_actor,
+        occurred_at=LOCAL_TIME,
+    )
+
+
+def test_revision_and_reproposal_path_preserves_every_successful_mutation_value() -> None:
+    goal_id = GoalId(uuid4())
+    created = create_goal(
+        CreateGoalCommand(
+            goal_id,
+            "Research question",
+            _actor(ActorKind.USER),
+            TransitionEventId(uuid4()),
+            LOCAL_TIME,
+        )
+    )
+    scoped = begin_scoping(
+        created.goal,
+        BeginScopingCommand(
+            goal_id,
+            _actor(ActorKind.SYSTEM),
+            created.goal.version,
+            TransitionEventId(uuid4()),
+            LOCAL_TIME,
+        ),
+    )
+    first_subgoal = create_subgoal(SubgoalId(uuid4()), goal_id, "First", "Done")
+    first = propose_goal_decomposition(
+        scoped.goal,
+        ProposeGoalDecompositionCommand(
+            goal_id,
+            _actor(ActorKind.SYSTEM),
+            scoped.goal.version,
+            GoalPlanId(uuid4()),
+            (first_subgoal,),
+            (PlanSubgoalEntry(first_subgoal.subgoal_id, ()),),
+            TransitionEventId(uuid4()),
+            LOCAL_TIME,
+        ),
+    )
+
+    revise_actor = _actor(ActorKind.USER)
+    revise_event_id = TransitionEventId(uuid4())
+    revised = revise_goal_plan(
+        first.goal,
+        ReviseGoalPlanCommand(
+            goal_id, revise_actor, first.goal.version, revise_event_id, LOCAL_TIME
+        ),
+    )
+    assert revised.goal.goal_id == goal_id
+    assert revised.goal.state is GoalState.SCOPING
+    assert revised.goal.version == 3
+    assert revised.goal.current_proposal_plan_id is None
+    assert revised.goal.current_proposal_plan_version is None
+    assert revised.goal.approved_goal_plan_id is None
+    assert revised.goal.approved_goal_plan_version is None
+    _assert_transition(
+        revised.transition,
+        goal=revised.goal,
+        event_id=revise_event_id,
+        previous_state=GoalState.AWAITING_PLAN_APPROVAL,
+        next_state=GoalState.SCOPING,
+        actor=revise_actor,
+        occurred_at=LOCAL_TIME,
+    )
+
+    second_subgoal = create_subgoal(SubgoalId(uuid4()), goal_id, "Second", "Done")
+    second_entries = (PlanSubgoalEntry(second_subgoal.subgoal_id, ()),)
+    reproposal_actor = _actor(ActorKind.SYSTEM)
+    reproposal_event_id = TransitionEventId(uuid4())
+    reproposed = propose_goal_decomposition(
+        revised.goal,
+        ProposeGoalDecompositionCommand(
+            goal_id,
+            reproposal_actor,
+            revised.goal.version,
+            GoalPlanId(uuid4()),
+            (second_subgoal,),
+            second_entries,
+            reproposal_event_id,
+            LOCAL_TIME,
+        ),
+    )
+    assert reproposed.goal.goal_id == goal_id
+    assert reproposed.goal.state is GoalState.AWAITING_PLAN_APPROVAL
+    assert reproposed.goal.version == 4
+    assert reproposed.goal.current_proposal_plan_id == reproposed.proposal.plan_id
+    assert reproposed.goal.current_proposal_plan_version == reproposed.proposal.version == 0
+    assert reproposed.goal.approved_goal_plan_id is None
+    assert reproposed.goal.approved_goal_plan_version is None
+    assert reproposed.proposal.goal_id == goal_id
+    assert reproposed.proposal.entries == second_entries
+    assert reproposed.proposal.plan_id != first.proposal.plan_id
+    _assert_transition(
+        reproposed.transition,
+        goal=reproposed.goal,
+        event_id=reproposal_event_id,
+        previous_state=GoalState.SCOPING,
+        next_state=GoalState.AWAITING_PLAN_APPROVAL,
+        actor=reproposal_actor,
+        occurred_at=LOCAL_TIME,
+    )
+
+
+def test_approval_rejects_current_proposal_version_mismatch_without_mutation() -> None:
+    proposed = _proposal_result()
+    mismatched_proposal = replace(proposed.proposal, version=AggregateVersion(1))
+    command = ApproveGoalPlanCommand(
+        proposed.goal.goal_id,
+        _actor(ActorKind.USER),
+        proposed.goal.version,
+        TransitionEventId(uuid4()),
+        LOCAL_TIME,
+    )
+
+    _assert_rejected_atomically(
+        lambda: approve_goal_plan(proposed.goal, mismatched_proposal, command),
+        InvalidStructuralInputError,
+        proposed.goal,
+        mismatched_proposal,
+    )
+
+
+def test_proposal_rejects_duplicate_entry_ids_with_unique_supplied_subgoals() -> None:
+    scoped = _scoping_goal()
+    first = create_subgoal(SubgoalId(uuid4()), scoped.goal_id, "First", "Done")
+    second = create_subgoal(SubgoalId(uuid4()), scoped.goal_id, "Second", "Done")
+    duplicate_entries = (
+        PlanSubgoalEntry(first.subgoal_id, ()),
+        PlanSubgoalEntry(first.subgoal_id, ()),
+    )
+    command = ProposeGoalDecompositionCommand(
+        scoped.goal_id,
+        _actor(ActorKind.SYSTEM),
+        scoped.version,
+        GoalPlanId(uuid4()),
+        (first, second),
+        duplicate_entries,
+        TransitionEventId(uuid4()),
+        LOCAL_TIME,
+    )
+
+    _assert_rejected_atomically(
+        lambda: propose_goal_decomposition(scoped, command),
+        InvalidStructuralInputError,
+        scoped,
+    )
+
+
+def test_propose_validation_precedence_covers_actor_identity_version_state_and_payload() -> None:
+    scoped = _scoping_goal()
+    payload_subgoal = create_subgoal(SubgoalId(uuid4()), scoped.goal_id, "One", "Done")
+    payload_command = ProposeGoalDecompositionCommand(
+        GoalId(uuid4()),
+        _actor(ActorKind.USER),
+        AggregateVersion(99),
+        GoalPlanId(uuid4()),
+        (payload_subgoal,),
+        (),
+        TransitionEventId(uuid4()),
+        LOCAL_TIME,
+    )
+    _assert_rejected_atomically(
+        lambda: propose_goal_decomposition(scoped, payload_command),
+        ActorNotPermittedError,
+        scoped,
+    )
+    _assert_rejected_atomically(
+        lambda: propose_goal_decomposition(
+            scoped, replace(payload_command, actor=_actor(ActorKind.SYSTEM))
+        ),
+        InvalidStructuralInputError,
+        scoped,
+    )
+    _assert_rejected_atomically(
+        lambda: propose_goal_decomposition(
+            scoped,
+            replace(
+                payload_command,
+                actor=_actor(ActorKind.SYSTEM),
+                goal_id=scoped.goal_id,
+            ),
+        ),
+        GoalVersionConflictError,
+        scoped,
+    )
+    draft = _created_goal()
+    _assert_rejected_atomically(
+        lambda: propose_goal_decomposition(
+            draft,
+            replace(
+                payload_command,
+                actor=_actor(ActorKind.SYSTEM),
+                goal_id=draft.goal_id,
+                expected_version=draft.version,
+            ),
+        ),
+        IllegalGoalTransitionError,
+        draft,
+    )
+    _assert_rejected_atomically(
+        lambda: propose_goal_decomposition(
+            scoped,
+            replace(
+                payload_command,
+                actor=_actor(ActorKind.SYSTEM),
+                goal_id=scoped.goal_id,
+                expected_version=scoped.version,
+            ),
+        ),
+        InvalidStructuralInputError,
+        scoped,
+    )
+
+
+def test_begin_scoping_validation_precedence_covers_actor_identity_version_and_state() -> None:
+    draft = _created_goal()
+    command = BeginScopingCommand(
+        GoalId(uuid4()),
+        _actor(ActorKind.USER),
+        AggregateVersion(99),
+        TransitionEventId(uuid4()),
+        LOCAL_TIME,
+    )
+    _assert_rejected_atomically(
+        lambda: begin_scoping(draft, command), ActorNotPermittedError, draft
+    )
+    _assert_rejected_atomically(
+        lambda: begin_scoping(draft, replace(command, actor=_actor(ActorKind.SYSTEM))),
+        InvalidStructuralInputError,
+        draft,
+    )
+    _assert_rejected_atomically(
+        lambda: begin_scoping(
+            draft,
+            replace(command, actor=_actor(ActorKind.SYSTEM), goal_id=draft.goal_id),
+        ),
+        GoalVersionConflictError,
+        draft,
+    )
+    scoped = _scoping_goal()
+    _assert_rejected_atomically(
+        lambda: begin_scoping(
+            scoped,
+            replace(
+                command,
+                actor=_actor(ActorKind.SYSTEM),
+                goal_id=scoped.goal_id,
+                expected_version=scoped.version,
+            ),
+        ),
+        IllegalGoalTransitionError,
+        scoped,
+    )
+
+
+def test_revise_validation_precedence_covers_actor_identity_version_and_state() -> None:
+    proposed = _proposal_result()
+    command = ReviseGoalPlanCommand(
+        GoalId(uuid4()),
+        _actor(ActorKind.SYSTEM),
+        AggregateVersion(99),
+        TransitionEventId(uuid4()),
+        LOCAL_TIME,
+    )
+    _assert_rejected_atomically(
+        lambda: revise_goal_plan(proposed.goal, command),
+        ActorNotPermittedError,
+        proposed.goal,
+        proposed.proposal,
+    )
+    _assert_rejected_atomically(
+        lambda: revise_goal_plan(proposed.goal, replace(command, actor=_actor(ActorKind.USER))),
+        InvalidStructuralInputError,
+        proposed.goal,
+        proposed.proposal,
+    )
+    _assert_rejected_atomically(
+        lambda: revise_goal_plan(
+            proposed.goal,
+            replace(command, actor=_actor(ActorKind.USER), goal_id=proposed.goal.goal_id),
+        ),
+        GoalVersionConflictError,
+        proposed.goal,
+        proposed.proposal,
+    )
+    scoped = _scoping_goal()
+    _assert_rejected_atomically(
+        lambda: revise_goal_plan(
+            scoped,
+            replace(
+                command,
+                actor=_actor(ActorKind.USER),
+                goal_id=scoped.goal_id,
+                expected_version=scoped.version,
+            ),
+        ),
+        IllegalGoalTransitionError,
+        scoped,
+    )
+
+
+def test_approval_validation_precedence_covers_actor_identities_version_state_and_linkage() -> None:
+    proposed = _proposal_result()
+    command = ApproveGoalPlanCommand(
+        GoalId(uuid4()),
+        _actor(ActorKind.SYSTEM),
+        AggregateVersion(99),
+        TransitionEventId(uuid4()),
+        LOCAL_TIME,
+    )
+    wrong_proposal = replace(proposed.proposal, goal_id=GoalId(uuid4()))
+    _assert_rejected_atomically(
+        lambda: approve_goal_plan(proposed.goal, wrong_proposal, command),
+        ActorNotPermittedError,
+        proposed.goal,
+        wrong_proposal,
+    )
+    _assert_rejected_atomically(
+        lambda: approve_goal_plan(
+            proposed.goal, proposed.proposal, replace(command, actor=_actor(ActorKind.USER))
+        ),
+        InvalidStructuralInputError,
+        proposed.goal,
+        proposed.proposal,
+    )
+    _assert_rejected_atomically(
+        lambda: approve_goal_plan(
+            proposed.goal,
+            wrong_proposal,
+            replace(command, actor=_actor(ActorKind.USER), goal_id=proposed.goal.goal_id),
+        ),
+        InvalidStructuralInputError,
+        proposed.goal,
+        wrong_proposal,
+    )
+    _assert_rejected_atomically(
+        lambda: approve_goal_plan(
+            proposed.goal,
+            proposed.proposal,
+            replace(
+                command,
+                actor=_actor(ActorKind.USER),
+                goal_id=proposed.goal.goal_id,
+            ),
+        ),
+        GoalVersionConflictError,
+        proposed.goal,
+        proposed.proposal,
+    )
+    scoped = _scoping_goal()
+    scoped_proposal = replace(proposed.proposal, goal_id=scoped.goal_id)
+    _assert_rejected_atomically(
+        lambda: approve_goal_plan(
+            scoped,
+            scoped_proposal,
+            replace(
+                command,
+                actor=_actor(ActorKind.USER),
+                goal_id=scoped.goal_id,
+                expected_version=scoped.version,
+            ),
+        ),
+        IllegalGoalTransitionError,
+        scoped,
+        scoped_proposal,
+    )
+    linkage_mismatch = replace(proposed.proposal, plan_id=GoalPlanId(uuid4()))
+    _assert_rejected_atomically(
+        lambda: approve_goal_plan(
+            proposed.goal,
+            linkage_mismatch,
+            replace(
+                command,
+                actor=_actor(ActorKind.USER),
+                goal_id=proposed.goal.goal_id,
+                expected_version=proposed.goal.version,
+            ),
+        ),
+        InvalidStructuralInputError,
+        proposed.goal,
+        linkage_mismatch,
+    )
