@@ -1,4 +1,4 @@
-# Delivery D1.4 Final Implementation Plan — Issue #23 — v1.3
+# Delivery D1.4 Final Implementation Plan — Issue #23 — v1.4
 
 Status: **DRAFT PLAN FOR LEAD-SA AND HUMAN REVIEW. NOT AN IMPLEMENTATION.**
 
@@ -8,13 +8,14 @@ This is a complete, standalone revision, edited in place in the same file
 that held Plan v1.1. It supersedes Plan v1.2 in full and does not require
 an earlier plan to be read alongside it. It preserves every accepted v1.2
 decision except direct consistency edits required by "Lead-SA R3" (R3-01
-and R3-02): the inherited D1.3 boundary tests are reconciled with the
-authorized identifier/datetime surface, and the three public result types
-receive complete direct-construction invariants.
+and R3-02) and "Lead-SA R4": the inherited D1.3 boundary tests are
+reconciled with the authorized identifier/datetime surface, the three public
+result types receive complete direct-construction invariants, and the public
+structural factory `create_subgoal` is restored to the package-root API.
 
 This file remains at `tmp/delivery-d1-4-plan-v1.1.md` — the filename is
 unchanged, per the R2 review's explicit instruction: "The filename remains
-unchanged; update the document's internal version to v1.2." This v1.3 edit
+unchanged; update the document's internal version to v1.2." This v1.4 edit
 session's own instructions authorized editing only this exact, already
 git-ignored target file. No other file was created, edited, staged,
 committed, or pushed. No branch was created or switched.
@@ -27,10 +28,10 @@ writing repository files, including ignored files — that write was a
 planning-process deviation, not an equivalence between "writing an ignored
 file" and "no workspace mutation." Plan v1.1 was subsequently written to
 this file, `tmp/delivery-d1-4-plan-v1.1.md`, under an explicit
-authorization permitting exactly that one write. This v1.3 revision is an
+authorization permitting exactly that one write. This v1.4 revision is an
 in-place edit of that same, already-authorized file, made under this
 turn's explicit authorization to edit it. No new file has been created to
-produce v1.3, and no cleanup or deletion of the v1.0 file is authorized or
+produce v1.4, and no cleanup or deletion of the v1.0 file is authorized or
 performed by this document.
 
 ---
@@ -61,7 +62,7 @@ entirely deferred, unchanged from R1.
 
 **Disposition of the R1 review (carried forward).** Every R1-01 through
 R1-11 requirement was treated as binding for v1.1 and remains satisfied by
-v1.3 except where R2 explicitly narrows or reverses a v1.1 choice (noted
+v1.4 except where R2 explicitly narrows or reverses a v1.1 choice (noted
 per DR ID in Section D). The R1-accepted parts of v1.0 — the checkpoint,
 the `DELIBERATING` stop boundary, the accepted `GoalState` vocabulary,
 USER-only revision/approval, `SYSTEM` as the recommended orchestration
@@ -73,7 +74,7 @@ implementation commit followed only by separate correction commits if
 later authorized — remain preserved.
 
 **Disposition of the R2 review.** Every R2-01 through R2-07 requirement is
-treated as binding for this v1.3 revision. Section D marks, for every DR
+treated as binding for this v1.4 revision. Section D marks, for every DR
 ID, whether R2 left it Unchanged, further Superseded, Removed, or newly
 introduced it, with an explicit R2 cross-reference. The R2 review's
 "Accepted corrections" list is preserved unless a specific R2 item
@@ -86,13 +87,19 @@ semantic-only runtime validation policy; the exact `DELIBERATING` stop
 boundary; and the dependency/contracts/infrastructure exclusions.
 
 **Disposition of the R3 correction.** R3-01 and R3-02 are binding for this
-v1.3 revision. R3-01 reconciles the inherited D1.3 boundary-test baseline:
+v1.4 revision. R3-01 reconciles the inherited D1.3 boundary-test baseline:
 `TransitionEventId` is no longer forbidden, the obsolete blanket ban on
 domain `datetime` imports and datetime-related public helpers is replaced,
 and a narrow allowlist asserts the sole authorized datetime surface
 (`datetime` from the standard library and `ensure_aware_utc`). R3-02
 completes the public result-value invariants without adding a type, module,
 test path, exception, export, or changed path.
+
+**Disposition of the R4 correction.** R4 restores `create_subgoal` as a
+package-root export. This is a newly proposed public-API decision requiring
+explicit human approval: `create_subgoal` is a public structural factory, and
+root-exporting it keeps the domain API consistent. It changes no planned path,
+module, test path, dependency, implementation behavior, or delivery scope.
 
 **Why this remains one reviewable vertical slice.** The design still
 involves three independently versioned things (`Goal`, `Subgoal`,
@@ -229,6 +236,7 @@ downstream section built on a recommendation re-flags the DR ID.
 | DR-25 | Unchanged (R1-09) | Direct `model_validate(domain_object, strict=True)` pass-through, or explicit field-by-field mapping? | R1-09: domain and contract enum/`ActorRef` classes are independent types; strict-mode Pydantic validation of a foreign class is not guaranteed to succeed. | (a) Explicit mapping functions per type family. (b) v1.0's direct pass-through assumption (rejected). | (a) is verified against Pydantic's actual strict-mode behavior. | (a) | `test_domain_contract_compatibility.py` (K, N) |
 | DR-26 | **New** (R2-03) | Exact scope and mechanics of the Goal/command identity guard? | R2-03 requires rejecting `command.goal_id != goal.goal_id` on every mutation over an existing `Goal`, and `proposal.goal_id != goal.goal_id` on approval specifically. | (a) Every one of the four Goal-mutation functions (`begin_scoping`, `propose_goal_decomposition`, `revise_goal_plan`, `approve_goal_plan`) compares `command.goal_id == goal.goal_id` as its first structural check (immediately after the actor guard, DR-12); `approve_goal_plan` additionally compares `proposal.goal_id == goal.goal_id`; any mismatch raises `InvalidStructuralInputError`. (b) Omit the check on the theory that a caller would never construct a mismatched command (rejected — R2-03 explicitly requires the rejection to exist and be tested). | (a) is the only option R2-03 permits; it also gives a single, uniform place (DR-12's ordering) for the check across all four mutations. | (a) | Every Goal mutation function (G, H), tests (N) |
 | DR-27 | **New** (R2-03) | Exact set-relation required between `ProposeGoalDecompositionCommand.subgoals` and `.entries`? | R2-03's recommended rule: Subgoal IDs unique; every supplied Subgoal has `goal_id == goal.goal_id`; the set of supplied Subgoal IDs equals the set of entry Subgoal IDs exactly; no unreferenced supplied Subgoal and no entry without a supplied Subgoal. | (a) Exact set-equality: `{s.subgoal_id for s in command.subgoals} == {e.subgoal_id for e in command.entries}`, with no duplicates in either collection and every supplied `Subgoal.goal_id == goal.goal_id`; any violation raises `InvalidStructuralInputError`. (b) One-directional containment only (every entry must reference a supplied Subgoal, but "extra" unreferenced supplied Subgoals are tolerated) — a looser rule not requested by R2-03's recommended wording. | (a) matches R2-03's explicit recommended rule word-for-word and leaves no ambiguity about "unreferenced" Subgoals; (b) would silently tolerate caller mistakes R2-03's wording does not sanction. | (a) | `propose_goal_decomposition` (G, H), tests (N) |
+| DR-28 | **New** (R4) | Is `create_subgoal` package-root exported? | R4 requires this policy to be explicit. `create_subgoal` is a public structural factory, while R2-01 preserves its non-command, non-lifecycle semantics. | (a) Root-export `create_subgoal`. (b) Leave it only at `mnemograph_domain.subgoals.create_subgoal`. | (a) keeps the public domain API consistent with the other planned public factories without changing behavior or scope; (b) leaves the public factory omitted from the package-root inventory. | (a) | `__init__.py` export set (F.10, L), boundary assertion (N) |
 
 **Consolidated bundle:** Sections D (this table) and Q together form the
 single decision bundle for one Lead-SA/human review pass; Section Q
@@ -363,7 +371,7 @@ identifier, no timestamp, and it emits no transition record. Constructs
 version=make_aggregate_version(0), statement=statement,
 definition_of_done=definition_of_done,
 acceptance_status=SubgoalAcceptanceStatus.NOT_ACCEPTED)`. `CreateSubgoalCommand`
-is **removed** (R2-01) — it does not exist in v1.3.
+is **removed** (R2-01) — it does not exist in v1.4.
 
 ### F.5 `goal_plans.py` (new — DR-02, DR-06, DR-15, DR-16, DR-16a, DR-16b, DR-22)
 
@@ -575,7 +583,7 @@ linkage; and `GoalApprovalResult` requires `DELIBERATING` and exact
 approved-plan-to-Goal ID/version linkage. Every result invariant, including
 the existing transition consistency checks, raises
 `InvalidStructuralInputError`. `GoalMutationResult` is **removed** — it
-does not exist in v1.3.
+does not exist in v1.4.
 
 ### F.9 `goal_mutations.py` (new — the five Goal mutation functions)
 
@@ -642,6 +650,7 @@ GoalTransitionResult
 GoalProposalResult
 GoalApprovalResult
 create_goal
+create_subgoal
 begin_scoping
 propose_goal_decomposition
 revise_goal_plan
@@ -649,13 +658,13 @@ approve_goal_plan
 ensure_aware_utc
 ```
 
-That is 25 new symbols added to the existing 16, for a package-root
-`__all__` of exactly **41** symbols after this batch. `create_subgoal`
-remains a public module-level factory at `mnemograph_domain.subgoals` but is
-not a package-root export. (`CreateSubgoalCommand`
-and `GoalMutationResult` from v1.1 are removed; `GoalTransitionResult`,
-`GoalProposalResult`, and `GoalApprovalResult` replace them, keeping the
-total count at 41). `_validate_plan_entries` is **not** exported.
+That is 26 new symbols added to the existing 16, for a package-root
+`__all__` of exactly **42** symbols after this batch. `create_subgoal` is a
+root export as well as a public module-level structural factory at
+`mnemograph_domain.subgoals` (DR-28/R4). (`CreateSubgoalCommand` and
+`GoalMutationResult` from v1.1 are removed; `GoalTransitionResult`,
+`GoalProposalResult`, and `GoalApprovalResult` replace them.)
+`_validate_plan_entries` is **not** exported.
 
 ---
 
@@ -884,7 +893,7 @@ second top-level file count.
 | `libs/domain/src/mnemograph_domain/commands.py` | Create | 5 Goal command dataclasses (`CreateSubgoalCommand` never existed here — R2-01) |
 | `libs/domain/src/mnemograph_domain/transitions.py` | Create | `GoalTransitionRecord`, `GoalTransitionResult`, `GoalProposalResult`, `GoalApprovalResult` (R2-04, replacing v1.1's single `GoalMutationResult`) |
 | `libs/domain/src/mnemograph_domain/goal_mutations.py` | Create | `create_goal`, `begin_scoping`, `propose_goal_decomposition`, `revise_goal_plan`, `approve_goal_plan` |
-| `libs/domain/src/mnemograph_domain/__init__.py` | Modify | 25 new exports (Section F.10) |
+| `libs/domain/src/mnemograph_domain/__init__.py` | Modify | 26 new exports (Section F.10, including `create_subgoal`) |
 | `libs/domain/tests/test_domain_identifiers.py` | Modify | `+ TransitionEventId` in approved/deferred sets |
 | `libs/domain/tests/test_domain_datetimes.py` | Create | `ensure_aware_utc` tests |
 | `libs/domain/tests/test_domain_errors.py` | Create | Exception hierarchy/identity tests |
@@ -895,7 +904,7 @@ second top-level file count.
 | `libs/domain/tests/test_domain_transitions.py` | Create | `GoalTransitionRecord` and all three result-type construction/immutability/cross-validation tests |
 | `libs/domain/tests/test_domain_goal_mutations.py` | Create | Full transition/version/authority/identity/atomicity matrix |
 | `libs/domain/tests/test_domain_contract_compatibility.py` | Modify | New explicit-mapping compatibility assertions (K) |
-| `libs/domain/tests/test_domain_boundaries.py` | Modify | Updated `APPROVED_EXPORTS` (41 symbols); remove `TransitionEventId` from `FORBIDDEN_EXPORTS`; replace/remove the obsolete blanket datetime ban with a narrow authorized-datetime-surface assertion; exception-surface assertion remains a named allowlist of exactly the 4 classes in `errors.py` |
+| `libs/domain/tests/test_domain_boundaries.py` | Modify | Updated `APPROVED_EXPORTS` (42 symbols, including `create_subgoal`); remove `TransitionEventId` from `FORBIDDEN_EXPORTS`; replace/remove the obsolete blanket datetime ban with a narrow authorized-datetime-surface assertion; exception-surface assertion remains a named allowlist of exactly the 4 classes in `errors.py` |
 | `libs/domain/README.md` | Modify | Documents the new Delivery D1.4 modules (DR-18, included by default per R1-10) |
 
 **Expected unchanged (confirmed by Section O's guard commands):**
@@ -907,10 +916,10 @@ second top-level file count.
 `infra/**`, `.github/workflows/**`, Compose files.
 
 **Exact package-root export set:** the existing 16 Delivery D1.3 symbols
-plus the 25 listed in Section F.10 — **41 symbols total**, no duplicates,
+plus the 26 listed in Section F.10 — **42 symbols total**, no duplicates,
 recalculated after removing `CreateSubgoalCommand`/`GoalMutationResult`
 and adding `GoalTransitionResult`/`GoalProposalResult`/`GoalApprovalResult`
-(R2-07).
+(R2-07), with `create_subgoal` retained as a root export (DR-28/R4).
 
 ---
 
@@ -927,7 +936,7 @@ and adding `GoalTransitionResult`/`GoalProposalResult`/`GoalApprovalResult`
 | 7 | `commands.py`; `test_domain_commands.py` | 5 Goal command dataclasses | DR-10, DR-11, DR-13 | `uv run pytest libs/domain/tests/test_domain_commands.py` |
 | 8 | `transitions.py`; `test_domain_transitions.py` | `GoalTransitionRecord`, `GoalTransitionResult`, `GoalProposalResult`, `GoalApprovalResult`; complete direct-construction result invariants (R3-02) | DR-09 | `uv run pytest libs/domain/tests/test_domain_transitions.py` |
 | 9 | `goal_mutations.py`; `test_domain_goal_mutations.py` | 5 mutation functions | DR-03, DR-04, DR-05, DR-06, DR-07, DR-12, DR-13, DR-17b, DR-26, DR-27 | `uv run pytest libs/domain/tests/test_domain_goal_mutations.py` |
-| 10 | `__init__.py` | 25 new exports | all of the above | `uv run pytest libs/domain/tests` |
+| 10 | `__init__.py` | 26 new exports, including `create_subgoal` | all of the above, DR-28 | `uv run pytest libs/domain/tests` |
 | 11 | `test_domain_contract_compatibility.py` | new mapping-based assertions | DR-25 | `uv run pytest libs/domain/tests/test_domain_contract_compatibility.py` |
 | 12 | `test_domain_boundaries.py` | updated `APPROVED_EXPORTS`; remove `TransitionEventId` from `FORBIDDEN_EXPORTS`; replace blanket datetime ban with narrow authorized-datetime assertion; named exception allowlist | DR-08 | `uv run pytest libs/domain/tests/test_domain_boundaries.py` |
 | 13 | `README.md` | documentation only | DR-18 | `pnpm run validate` |
@@ -972,7 +981,7 @@ documentation passes over the completed implementation.
 | Determinism | `test_domain_goal_mutations.py` | Two calls with identical caller-supplied `event_id`/`occurred_at`/IDs | Produce byte-identical `GoalTransitionRecord` values (proves no hidden randomness/clock — R1-03/R2-01) |
 | Domain/contract compatibility | `test_domain_contract_compatibility.py` | Explicit mapping of `GoalTransitionRecord`, `ActorRef`, all enums, `Subgoal` (including `goal_id`/`version`) into contract-native payloads, then `model_validate(strict=True)` | Succeeds; round-trips equal; existing D1.3 assertions continue to pass unmodified |
 | Dependency boundaries (R3-01) | `test_domain_boundaries.py` | AST-based import test over all new files; `TransitionEventId` absent from `FORBIDDEN_EXPORTS`; no blanket datetime prohibition; narrow authorized-datetime-surface assertion | All new files import only stdlib or `mnemograph_domain`; the only datetime import is stdlib `datetime`, and the only datetime-related package-root helper is `ensure_aware_utc` |
-| Package-root exports | `test_domain_boundaries.py` | `mnemograph_domain.__all__` | Equals exactly the 41-symbol set, no duplicates |
+| Package-root exports | `test_domain_boundaries.py` | `mnemograph_domain.__all__` | Equals exactly the 42-symbol set, no duplicates, including `create_subgoal` |
 | Named exception allowlist | `test_domain_boundaries.py` | Every exported object that is an exception class | Set equals exactly `{GoalVersionConflictError, IllegalGoalTransitionError, ActorNotPermittedError, InvalidStructuralInputError}` |
 | D1/D5 exclusion | `test_domain_goal_mutations.py` | `GoalState.ACCEPTED`/`PUBLISHING`/`COMPLETED` do not exist; no function references any state beyond `DELIBERATING` | Confirms unchanged enum and no out-of-scope reference |
 
@@ -1043,7 +1052,7 @@ exercise every direct-construction rejection listed in Section N and assert
   `propose_goal_decomposition`) remains orchestration attribution, not
   authentication or human authority; `create_subgoal` carries no actor of
   any kind (R2-01), so it introduces no attribution surface at all.
-- **Compatibility impact:** the domain surface grows from 16 to 41
+- **Compatibility impact:** the domain surface grows from 16 to 42
   exported symbols, purely additively. The corrected compatibility tests
   (K) are more rigorous than v1.0's, reducing the risk of a false-positive
   "compatible" claim.
@@ -1091,6 +1100,8 @@ the sufficient, single-pass index.
 | DR-07 | Fresh plan identity per proposal round? | Yes | Newly proposed |
 | DR-08 | Error taxonomy | 4 narrow `ValueError` subclasses in `errors.py`, extended to cover R2-03/R2-04 categories | Binding correction (R1-07), scope extended (R2-04) |
 | DR-09 | Mutation result shape | Three distinct result types (`GoalTransitionResult`, `GoalProposalResult`, `GoalApprovalResult`) | Binding correction (R2-04) |
+| R3-01 | D1.3 boundary-test reconciliation | Permit `TransitionEventId`; replace the blanket datetime prohibition with the narrow authorized datetime surface | Binding correction (R3-01) |
+| R3-02 | Result-type direct-construction invariants | Retain the three result types and add complete state/payload/Goal-linkage invariants | Binding correction (R3-02) |
 | DR-10 | Command-dataclass pattern for Goal mutations | Yes, one per Goal mutation | Newly proposed |
 | DR-11 | `create_goal` and `expected_version` | Exempt — factory, not a mutation over an existing aggregate | Structurally derived (R1-07 reasoning) |
 | DR-12 | Validation-check ordering | actor → Goal-identity → `expected_version` → transition-legality → payload/structural (→ proposal-identity, approval only) | Newly proposed, refined R2-03 |
@@ -1113,6 +1124,7 @@ the sufficient, single-pass index.
 | DR-25 | Domain/contract compatibility method | Explicit field-by-field mapping, never direct `model_validate` pass-through | Binding correction (R1-09) |
 | DR-26 | Goal/command (and proposal/Goal) identity guard | Reject any `goal_id` mismatch; checked right after the actor guard | Binding correction (R2-03) |
 | DR-27 | Subgoal↔entries set-relation for `propose_goal_decomposition` | Exact set equality, no duplicates, matching `goal_id` on every supplied Subgoal | Binding correction (R2-03) |
+| DR-28 | Package-root export policy for `create_subgoal` | Root-export `create_subgoal` | Newly proposed, requiring explicit human approval (R4): it is a public structural factory and root export keeps the domain API consistent |
 
 Every "newly proposed" row above is a recommendation, not a decision;
 every "binding correction" row reflects an explicit R1/R2 review
@@ -1136,7 +1148,7 @@ behavior beyond first entry into `DELIBERATING`.
 
 **Authorization gate.**
 
-Plan v1.3 is submitted for Lead-SA and human review. No decision in
+Plan v1.4 is submitted for Lead-SA and human review. No decision in
 Section D or Q is self-approved by this planning process. No branch has
 been created, no tracked repository file has been edited, and no
 implementation or tracked repository change is authorized by this plan.
